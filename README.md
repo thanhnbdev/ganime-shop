@@ -3,9 +3,9 @@
 
 ## Website bán áo phông Ganime sử dụng Java Spring Boot, Thymeleaf
 
-### Nguyễn Văn Linh
-### Nguyễn Bá Thành
-### Nguyễn Văn Long
-### Bùi Ngọc Sinh
-### Đinh Đức Cảnh
-### Dương Tuấn Anh
+* Nguyễn Văn Linh
+* Nguyễn Bá Thành
+* Nguyễn Văn Long
+* Bùi Ngọc Sinh
+* Đinh Đức Cảnh
+* Dương Tuấn Anh
