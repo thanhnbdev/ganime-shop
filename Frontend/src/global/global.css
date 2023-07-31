@@ -1,0 +1,59 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;1,100;1,200;1,300;1,400&display=swap");
+/* @import url('https://fonts.cdnfonts.com/css/museo-sans-rounded'); */
+/* tailwindcss */
+@import "~tailwindcss/base";
+@import "~tailwindcss/components";
+@import "~tailwindcss/utilities";
+/* @import "~antd/dist/reset.css"; */
+
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: "Museo Sans Rounded", sans-serif;
+}
+
+/* Scroll btn */
+
+.scroll-btn {
+  position: fixed;
+  bottom: 30px;
+  left: 20px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  z-index: 1;
+  padding: 5px;
+  cursor: pointer;
+  color: white;
+  background: blue;
+  opacity: 0.4;
+}
+
+.scroll-btn:hover {
+  position: fixed;
+  bottom: 30px;
+  left: 20px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  z-index: 1;
+  padding: 5px;
+  cursor: pointer;
+  color: white;
+  background: blue;
+  opacity: 0.8;
+}
+
+/* hiden arrows input number */
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
