@@ -55,9 +55,10 @@ function ProductDetail() {
     authoService.currentUser().then((res) => setCurrentUser(res));
     // eslint-disable-next-line
   }, [quantity]);
+  console.log(currentUser);
 
   function handleAddToCard() {
-    if (currentUser?.id > 0) {
+    if (currentUser?.id > 0 && currentUser?.role?.some((x) => x.id === 3)) {
       if (size.length === 0) {
         messageApi.error("Vui lòng chọn kích cỡ sản phẩm");
       } else if (color.length === 0) {
@@ -110,6 +111,8 @@ function ProductDetail() {
           messageApi.success("Thêm vào giỏ hàng thành công");
         }
       }
+    } else if (currentUser?.role?.some((x) => x.id !== 3)) {
+      messageApi.error("Vui lòng đăng nhập tài khoản khách hàng để mua hàng");
     } else {
       messageApi.error("Vui lòng đăng nhập để mua hàng");
     }

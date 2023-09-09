@@ -30,6 +30,10 @@ export const add = createAsyncThunk("order-detail/add", (data) => {
   return http.httpPost("order-detail", data);
 });
 
+export const deleteById = createAsyncThunk("order-detail/delete", (id) => {
+  return http.httpDelete("order-detail", id);
+});
+
 // Slice
 const slice = createSlice({
   name: "orderDetail",
@@ -37,6 +41,7 @@ const slice = createSlice({
     ordersDetail: [],
     vouchers: [],
     ordersDetailHistory: [],
+    ordersDetailCancelHistory: [],
     ordersDetailHistoryAdmin: [],
     ordersDetailHistoryAdminBill: [],
     ordersDetailHistoryUserBill: [],
@@ -135,27 +140,25 @@ const slice = createSlice({
         (x) => x.orders.user.id === Number(id)
       );
       state.ordersDetailHistory = action.payload.filter(
-        (x) => x.status === 2 && x.orders.user.id === Number(id)
+        (x) => x.status === 3 && x.orders.user.id === Number(id)
+      );
+      state.ordersDetailCancelHistory = action.payload.filter(
+        (x) => x.status === 5 && x.orders.user.id === Number(id)
       );
       state.ordersDetailHistoryAdmin = action.payload.filter(
-        (x) =>
-          (x.status === 2 && x.orders.status === 2) ||
-          (x.status === 3 && x.orders.status === 3)
+        (x) => x.status !== 1 && x.orders.status !== 1
       );
       state.ordersDetailHistoryAdminBill = action.payload.filter(
         (x) => x.status === 4 && x.orders.status === 4
       );
       state.ordersDetailHistoryUserBill = action.payload.filter(
         (x) =>
-          x.status === 3 &&
-          x.orders.status === 3 &&
+          x.status === 4 &&
+          x.orders.status === 4 &&
           x.orders.user.id === Number(id)
       );
       state.ordersDetailHistoryAdminBill.map(
-        (x) =>
-          (state.totalRevenue +=
-            ((x.orders.product.price * (100 - x.orders.product.sale)) / 100) *
-            x.quantity)
+        (x) => (state.totalRevenue += x.orders.product.price * x.quantity)
       );
       const t1 = state.ordersDetailHistoryAdminBill.filter(
         (x) => x.orders.date.substring(5, 7) === "01"
@@ -211,6 +214,7 @@ const slice = createSlice({
       state.loading = false;
       state.ordersDetail = [];
       state.ordersDetailHistory = [];
+      state.ordersDetailCancelHistory = [];
       state.ordersDetailHistoryAdmin = [];
       state.error = action.error.message;
     });
@@ -256,6 +260,23 @@ const slice = createSlice({
       state.ordersDetail.push(action.payload);
     });
     builder.addCase(add.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message;
+    });
+
+    //deleteById
+    builder.addCase(deleteById.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(deleteById.fulfilled, (state, action) => {
+      state.loading = false;
+      if (action.payload.id) {
+        state.ordersDetail = state.ordersDetail.filter(
+          (item) => item.id !== action.payload.id
+        );
+      }
+    });
+    builder.addCase(deleteById.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message;
     });

@@ -1,35 +1,21 @@
 import { useDispatch } from "react-redux";
-
 import contact from "~/assets/images/contact.svg";
-
-import HeaderLayout from "~/layouts/HeaderLayout";
 import FooterLayout from "~/layouts/FooterLayout";
-
+import HeaderLayout from "~/layouts/HeaderLayout";
 import { add } from "~/app/reducers/contact";
-
-import { Field, Form, Formik } from "formik";
-import { Button, Input, message } from "antd";
+import { Button, Form, Input, message } from "antd";
+import validators from "../../../services/validators";
+import TextArea from "antd/es/input/TextArea";
 
 function ContactPage() {
   const [messageApi, contextHolder] = message.useMessage();
-
+  const [form] = Form.useForm();
   const dispatch = useDispatch();
 
-  function handleContact(values, action) {
-    if (
-      values.title.length > 0 &&
-      values.email.length > 0 &&
-      values.content.length > 0 &&
-      values.name.length > 0 &&
-      values.phone.length > 0 &&
-      values.address.length > 0
-    ) {
-      dispatch(add(values));
-      messageApi.success("Gửi liên hệ thành công", { autoClose: 2000 });
-      action.resetForm();
-    } else {
-      messageApi.error("Vui lòng không được để trống !");
-    }
+  function handleContact(values) {
+    dispatch(add(values));
+    messageApi.success("Gửi liên hệ thành công", { autoClose: 2000 });
+    form.resetFields();
   }
 
   return (
@@ -53,94 +39,184 @@ function ContactPage() {
               Kết nối với chúng tôi để hiểu biết thêm về shop. Chúng tôi sẽ sớm
               kết nối lại với bạn !
             </div>
-            <Formik
-              enableReinitialize
+            <Form
+              form={form}
+              name="normal_contact"
+              className="contact-form"
               initialValues={{
-                name: "",
-                address: "",
-                email: "",
-                title: "",
-                phone: "",
-                content: "",
-                status: 0,
+                remember: true,
               }}
-              onSubmit={(values, actions) => handleContact(values, actions)}
+              onFinish={handleContact}
             >
-              {({
-                values,
-                errors,
-                touched,
-                /* and other goodies */
-              }) => (
-                <Form>
-                  <div className="mt-4">
-                    <label>Tiêu đề</label>
-                    <Field
-                      type="text"
-                      name="title"
-                      size="large"
-                      value={values.title}
-                      className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                    />
-                  </div>
-                  <div className="mt-4">
-                    <label>Họ tên</label>
-                    <Field
-                      type="text"
-                      name="name"
-                      value={values.name}
-                      className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                    />
-                  </div>
-                  <div className="mt-4">
-                    <label>Email</label>
-                    <Field
-                      type="email"
-                      name="email"
-                      value={values.email}
-                      className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                    />
-                  </div>
-                  <div className="mt-4">
-                    <label>Số điện thoại</label>
-                    <Field
-                      type="text"
-                      name="phone"
-                      value={values.phone}
-                      className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                    />
-                  </div>
-                  <div className="mt-4">
-                    <label>Nội dung</label>
-                    <Field
-                      as="textarea"
-                      type="text"
-                      name="content"
-                      value={values.content}
-                      className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                    />
-                  </div>
-                  <div className="mt-4">
-                    <label>Địa chỉ</label>
-                    <Field
-                      as="textarea"
-                      type="text"
-                      name="address"
-                      value={values.address}
-                      className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                    />
-                  </div>
-                  <div className="mt-4">
-                    <Button type="primary" htmlType="submit" className="w-full">
-                      Send
-                    </Button>
-                  </div>
-                </Form>
-              )}
-            </Formik>
+              <Form.Item
+                label="Tiêu đề"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="title"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập tiêu đề !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Tiêu đề" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Họ tên"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="fullname"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập họ tên !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input size="large" placeholder="Họ tên" />
+              </Form.Item>
+              <Form.Item
+                label="Email"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="email"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập email !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (!validators.email.test(value)) {
+                          reject("Nhập sai định dạng email !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Email" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Số điện thoại"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="phone"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập số điện thoại !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (!validators.phone.test(value)) {
+                          reject("Nhập sai định dạng số điện thoại !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Số điện thoại" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Nội dung"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="content"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập nội dung !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <TextArea placeholder="content" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Địa chỉ"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="address"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập địa chỉ !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <TextArea placeholder="address" size="large" />
+              </Form.Item>
+              <Form.Item>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  className="w-full mt-4"
+                >
+                  GỬI LIÊN HỆ
+                </Button>
+              </Form.Item>
+            </Form>
           </div>
           <div className="p-8">
-            <img src={contact} alt="contact" />
+            <img src={contact} alt="contact" className="w-full" />
           </div>
         </div>
       </div>

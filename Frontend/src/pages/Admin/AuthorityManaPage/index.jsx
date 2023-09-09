@@ -166,8 +166,8 @@ function AuthorityManaPage() {
         <div className="mb-6 grid grid-cols-2">
           <div>
             <Input.Search
-              onChange={(e) =>
-                setTimeout(() => setValueSearch(e.target.value), 1000)
+              onSearch={(value) =>
+                setTimeout(() => setValueSearch(value), 1000)
               }
               size="large"
               allowClear

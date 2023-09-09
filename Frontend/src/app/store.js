@@ -15,6 +15,8 @@ import authority from "./reducers/authority";
 import feedback from "./reducers/feedback";
 import favourite from "./reducers/favourite";
 import voucher from "./reducers/voucher";
+import productSize from "./reducers/productSize";
+import productColor from "./reducers/productColor";
 
 const reducer = combineReducers({
   // here we will be adding reducers
@@ -24,6 +26,8 @@ const reducer = combineReducers({
   role: role,
   contact: contact,
   product: product,
+  productSize: productSize,
+  productColor: productColor,
   order: order,
   orderDetail: orderDetail,
   category: category,

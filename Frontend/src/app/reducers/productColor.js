@@ -4,47 +4,50 @@ import http from "~/services/apiService";
 
 // Generates pending, fulfilled and rejected action types
 
-export const getAllProduct = createAsyncThunk("product/getAllProduct", () => {
-  return http.httpGet("product");
-});
-
-export const getProductById = createAsyncThunk(
-  "product/getProductById",
-  (id) => {
-    return http.httpGet(`product/${id}`);
+export const getAllProductColor = createAsyncThunk(
+  "product/getAllProductColor",
+  () => {
+    return http.httpGet("product-color");
   }
 );
 
-export const update = createAsyncThunk("product/update", (data) => {
-  return http.httpPut(`product/${data.id}`, data);
+export const getProductById = createAsyncThunk(
+  "product-color/getProductById",
+  (id) => {
+    return http.httpGet(`product-color/${id}`);
+  }
+);
+
+export const update = createAsyncThunk("product-color/update", (data) => {
+  return http.httpPut(`product-color/${data.id}`, data);
 });
 
-export const add = createAsyncThunk("product/add", (data) => {
-  return http.httpPost("product", data);
+export const add = createAsyncThunk("product-color/add", (data) => {
+  return http.httpPost("product-color", data);
 });
 
 // Slice
 const slice = createSlice({
-  name: "product",
+  name: "productColor",
   initialState: {
-    products: [],
-    product: {},
+    productColors: [],
+    productColor: {},
     error: "",
     loading: false,
   },
   extraReducers: (builder) => {
-    // getAllproduct
-    builder.addCase(getAllProduct.pending, (state) => {
+    // getAllproductColor
+    builder.addCase(getAllProductColor.pending, (state) => {
       state.loading = true;
     });
-    builder.addCase(getAllProduct.fulfilled, (state, action) => {
+    builder.addCase(getAllProductColor.fulfilled, (state, action) => {
       state.loading = false;
-      state.products = action.payload.sort((a, b) => a.id - b.id);
+      state.productColors = action.payload;
       state.error = "";
     });
-    builder.addCase(getAllProduct.rejected, (state, action) => {
+    builder.addCase(getAllProductColor.rejected, (state, action) => {
       state.loading = false;
-      state.products = [];
+      state.productColors = [];
       state.error = action.error.message;
     });
 
@@ -54,12 +57,12 @@ const slice = createSlice({
     });
     builder.addCase(getProductById.fulfilled, (state, action) => {
       state.loading = false;
-      state.product = action.payload;
+      state.productColor = action.payload;
       state.error = "";
     });
     builder.addCase(getProductById.rejected, (state, action) => {
       state.loading = false;
-      state.product = {};
+      state.productColor = {};
       state.error = action.error.message;
     });
 
@@ -70,7 +73,7 @@ const slice = createSlice({
     builder.addCase(update.fulfilled, (state, action) => {
       state.loading = false;
       if (action.payload.id) {
-        state.products = state.products.map((item) =>
+        state.productColors = state.productColors.map((item) =>
           item.id === action.payload.id ? action.payload : item
         );
       }
@@ -86,7 +89,7 @@ const slice = createSlice({
     });
     builder.addCase(add.fulfilled, (state, action) => {
       state.loading = false;
-      state.products.push(action.payload);
+      state.productColors.push(action.payload);
     });
     builder.addCase(add.rejected, (state, action) => {
       state.loading = false;

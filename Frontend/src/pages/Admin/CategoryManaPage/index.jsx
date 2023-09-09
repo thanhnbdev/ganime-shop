@@ -7,12 +7,16 @@ import {
   update,
 } from "~/app/reducers/category";
 
-import { CSVLink } from "react-csv";
-
-import { faFileExcel, faPlus } from "@fortawesome/free-solid-svg-icons";
+import {
+  faPlus,
+  faRotateLeft,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button, Input, Modal, Pagination, message } from "antd";
-import { Field, Form, Formik } from "formik";
+import { Button, Form, Input, Modal, Pagination, message } from "antd";
+import { ExportExcel } from "../../../components/Export/ExportExcel";
+import validators from "../../../services/validators";
+import { faPenToSquare } from "@fortawesome/free-regular-svg-icons";
 
 function CategoryManaPage() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -25,6 +29,7 @@ function CategoryManaPage() {
   const categories = useSelector((state) => state.category.categories);
   const category = useSelector((state) => state.category.category);
   const dispatch = useDispatch();
+  const [form] = Form.useForm();
 
   useEffect(() => {
     dispatch(getAllCategory());
@@ -33,9 +38,11 @@ function CategoryManaPage() {
 
   const itemsPerPage = 5;
   const endOffset = itemOffset + itemsPerPage;
-  const currentItems = categories.slice(itemOffset, endOffset);
+  const currentItems = categories
+    .filter((x) => x.name.toLowerCase().includes(valueSearch.toLowerCase()))
+    .slice(itemOffset, endOffset);
   const size = categories.filter((x) =>
-    x.name.toLowerCase().includes(valueSearch)
+    x.name.toLowerCase().includes(valueSearch.toLowerCase())
   ).length;
 
   // Invoke when user click to request another page.
@@ -63,28 +70,23 @@ function CategoryManaPage() {
     dispatch(getCategoryById(id));
   }
 
-  function validateForm(values) {
-    const errors = {};
-    if (values.name.length === 0) {
-      errors.name = "Required";
-    }
-    return errors;
-  }
-
   function handleAdd(values) {
     dispatch(
       add({
         ...values,
         category: categories.find((x) => x.id === Number(values.category)),
+        status: 1,
       })
     );
     setVisibleAdd(false);
+    form.resetFields();
     messageApi.success("Thêm loại sản phẩm thành công");
   }
 
   function handleDelete() {
     dispatch(update({ ...category, status: 0 }));
     setVisibleDelete(false);
+    form.resetFields();
     messageApi.success("Xóa loại sản phẩm thành công");
   }
 
@@ -95,19 +97,16 @@ function CategoryManaPage() {
   }
 
   function handleUpdate(values) {
-    dispatch(update(values));
+    dispatch(update({ ...category, ...values }));
     setVisibleUpdate(false);
     messageApi.success("Cập nhật thành công");
   }
 
-  const dataCsv = [];
-  categories.map((x) =>
-    dataCsv.push({
-      MaLoaiSanPham: x.id,
-      TenLoaiSanPham: x.name,
-      MieuTa: x.description,
-    })
-  );
+  const dataCsv = categories.map((x) => ({
+    "Mã loại sản phẩm": x.id,
+    "Tên loại sản phẩm": x.name,
+    "Miêu tả": x.description,
+  }));
 
   return (
     <div>
@@ -116,9 +115,7 @@ function CategoryManaPage() {
       <div className="grid grid-cols-2 gap-2 py-3">
         <div className="w-full">
           <Input.Search
-            onChange={(e) =>
-              setTimeout(() => setValueSearch(e.target.value), 1000)
-            }
+            onSearch={(value) => setTimeout(() => setValueSearch(value), 1000)}
             size="large"
             allowClear
             placeholder="Tìm kiếm..."
@@ -132,15 +129,7 @@ function CategoryManaPage() {
           >
             <span className="mx-2">Thêm</span>
           </Button>
-          <Button
-            type="primary"
-            style={{ backgroundColor: "#27ae60" }}
-            icon={<FontAwesomeIcon icon={faFileExcel} />}
-          >
-            <CSVLink data={dataCsv} className="mx-2">
-              Export
-            </CSVLink>
-          </Button>
+          <ExportExcel apiData={dataCsv} fileName={"category"} />
         </div>
       </div>
       <div className="mt-4">
@@ -149,7 +138,7 @@ function CategoryManaPage() {
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
               <tr>
                 <th scope="col" className="px-6 py-3">
-                  ID
+                  STT
                 </th>
                 <th scope="col" className="px-6 py-3">
                   Tên loại sản phẩm
@@ -167,40 +156,42 @@ function CategoryManaPage() {
             </thead>
             <tbody>
               {currentItems
-                .filter((x) => x.name.toLowerCase().includes(valueSearch))
-                .map((x) => (
+                .filter((x) =>
+                  x.name.toLowerCase().includes(valueSearch.toLowerCase())
+                )
+                .map((x, index) => (
                   <tr
                     key={x.id}
                     className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
-                    <td className="px-6 py-4">{x.id}</td>
+                    <td className="px-6 py-4">{index + 1}</td>
                     <td className="px-6 py-4">{x.name}</td>
                     <td className="px-6 py-4">{x.description}</td>
                     <td className="px-6 py-4">
                       {x.status === 1 ? "Hoạt động" : "Không hoạt động"}
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <Button type="primary" onClick={() => showUpdate(x.id)}>
-                        Chỉnh sửa
-                      </Button>
+                    <td className="px-1 py-4 text-center">
+                      <Button
+                        type="primary"
+                        onClick={() => showUpdate(x.id)}
+                        icon={<FontAwesomeIcon icon={faPenToSquare} />}
+                      />
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-1 py-4 text-center">
                       {x.status === 1 ? (
                         <Button
                           type="primary"
                           danger
                           onClick={() => showDelete(x.id)}
-                        >
-                          Xóa
-                        </Button>
+                          icon={<FontAwesomeIcon icon={faTrash} />}
+                        />
                       ) : (
                         <Button
                           type="default"
                           danger
                           onClick={() => showRestore(x.id)}
-                        >
-                          Khôi phục
-                        </Button>
+                          icon={<FontAwesomeIcon icon={faRotateLeft} />}
+                        />
                       )}
                     </td>
                   </tr>
@@ -243,45 +234,74 @@ function CategoryManaPage() {
             okText="Cập nhật"
             onCancel={() => setVisibleUpdate(false)}
           >
-            <Formik
-              enableReinitialize
-              initialValues={{
-                ...category,
-                name: category.name || "",
-                description: category.description || "",
-              }}
-              onSubmit={(values) => handleUpdate(values)}
+            <Form
+              form={form}
+              fields={[
+                {
+                  name: ["name"],
+                  value: category.name,
+                },
+                {
+                  name: ["description"],
+                  value: category.description,
+                },
+              ]}
+              id="update-form"
+              onFinish={handleUpdate}
             >
-              {({
-                values,
-                touched,
-                /* and other goodies */
-              }) => (
-                <Form id="update-form">
-                  <div>
-                    <div>
-                      <label>Tên loại sản phẩm</label>
-                      <Field
-                        type="text"
-                        name="name"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.name}
-                      />
-                    </div>
-                    <div>
-                      <label>Chi tiết</label>
-                      <Field
-                        type="text"
-                        as="textarea"
-                        name="description"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.description}
-                      />
-                    </div>
-                  </div>
-                </Form>
-              )}
-            </Formik>
+              <Form.Item
+                label="Tên loại sản phẩm"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="name"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập tên loại sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Tên loại sản phẩm" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Miêu tả"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="description"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập miêu tả !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input.TextArea size="large" placeholder="Miêu tả" />
+              </Form.Item>
+            </Form>
           </Modal>
           {/* Modal add */}
           <Modal
@@ -294,46 +314,60 @@ function CategoryManaPage() {
             }}
             onCancel={() => setVisibleAdd(false)}
           >
-            <Formik
-              enableReinitialize
-              initialValues={{
-                ...category,
-                name: category.name || "",
-                description: category.description || "",
-                status: 1,
-              }}
-              onSubmit={(values) => handleAdd(values)}
-            >
-              {({
-                values,
-                touched,
-                /* and other goodies */
-              }) => (
-                <Form id="add-form">
-                  <div>
-                    <div>
-                      <label>Tên loại sản phẩm</label>
-                      <Field
-                        type="text"
-                        name="name"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.name}
-                      />
-                    </div>
-                    <div>
-                      <label>Chi tiết</label>
-                      <Field
-                        type="text"
-                        as="textarea"
-                        name="description"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.description}
-                      />
-                    </div>
-                  </div>
-                </Form>
-              )}
-            </Formik>
+            <Form form={form} id="add-form" onFinish={handleAdd}>
+              <Form.Item
+                label="Tên loại sản phẩm"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="name"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập tên loại sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Tên loại sản phẩm" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Miêu tả"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="description"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập miêu tả !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input.TextArea size="large" placeholder="Miêu tả" />
+              </Form.Item>
+            </Form>
           </Modal>
         </div>
         <div className="flex justify-center items-center mt-3">

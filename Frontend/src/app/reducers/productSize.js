@@ -4,47 +4,50 @@ import http from "~/services/apiService";
 
 // Generates pending, fulfilled and rejected action types
 
-export const getAllProduct = createAsyncThunk("product/getAllProduct", () => {
-  return http.httpGet("product");
-});
-
-export const getProductById = createAsyncThunk(
-  "product/getProductById",
-  (id) => {
-    return http.httpGet(`product/${id}`);
+export const getAllProductSize = createAsyncThunk(
+  "product/getAllProductSize",
+  () => {
+    return http.httpGet("product-size");
   }
 );
 
-export const update = createAsyncThunk("product/update", (data) => {
-  return http.httpPut(`product/${data.id}`, data);
+export const getProductById = createAsyncThunk(
+  "product-size/getProductById",
+  (id) => {
+    return http.httpGet(`product-size/${id}`);
+  }
+);
+
+export const update = createAsyncThunk("product-size/update", (data) => {
+  return http.httpPut(`product-size/${data.id}`, data);
 });
 
-export const add = createAsyncThunk("product/add", (data) => {
-  return http.httpPost("product", data);
+export const add = createAsyncThunk("product-size/add", (data) => {
+  return http.httpPost("product-size", data);
 });
 
 // Slice
 const slice = createSlice({
-  name: "product",
+  name: "productSize",
   initialState: {
-    products: [],
-    product: {},
+    productSizes: [],
+    productSize: {},
     error: "",
     loading: false,
   },
   extraReducers: (builder) => {
-    // getAllproduct
-    builder.addCase(getAllProduct.pending, (state) => {
+    // getAllproductSize
+    builder.addCase(getAllProductSize.pending, (state) => {
       state.loading = true;
     });
-    builder.addCase(getAllProduct.fulfilled, (state, action) => {
+    builder.addCase(getAllProductSize.fulfilled, (state, action) => {
       state.loading = false;
-      state.products = action.payload.sort((a, b) => a.id - b.id);
+      state.productSizes = action.payload;
       state.error = "";
     });
-    builder.addCase(getAllProduct.rejected, (state, action) => {
+    builder.addCase(getAllProductSize.rejected, (state, action) => {
       state.loading = false;
-      state.products = [];
+      state.productSizes = [];
       state.error = action.error.message;
     });
 
@@ -54,12 +57,12 @@ const slice = createSlice({
     });
     builder.addCase(getProductById.fulfilled, (state, action) => {
       state.loading = false;
-      state.product = action.payload;
+      state.productSize = action.payload;
       state.error = "";
     });
     builder.addCase(getProductById.rejected, (state, action) => {
       state.loading = false;
-      state.product = {};
+      state.productSize = {};
       state.error = action.error.message;
     });
 
@@ -70,7 +73,7 @@ const slice = createSlice({
     builder.addCase(update.fulfilled, (state, action) => {
       state.loading = false;
       if (action.payload.id) {
-        state.products = state.products.map((item) =>
+        state.productSizes = state.productSizes.map((item) =>
           item.id === action.payload.id ? action.payload : item
         );
       }
@@ -86,7 +89,7 @@ const slice = createSlice({
     });
     builder.addCase(add.fulfilled, (state, action) => {
       state.loading = false;
-      state.products.push(action.payload);
+      state.productSizes.push(action.payload);
     });
     builder.addCase(add.rejected, (state, action) => {
       state.loading = false;

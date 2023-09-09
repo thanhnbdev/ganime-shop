@@ -10,6 +10,9 @@ import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Button, Input, Modal, Pagination } from "antd";
 import { getAllVoucher } from "~/app/reducers/voucher";
 import PDFFile from "../../../components/Pdf/PDFFile";
+import { faEye } from "@fortawesome/free-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFileExport } from "@fortawesome/free-solid-svg-icons";
 
 function OrderManaPage() {
   const [visibleDetail, setVisibleDetail] = useState(false);
@@ -62,12 +65,7 @@ function OrderManaPage() {
         x.orders.date === orderDetail.orders?.date &&
         x.orders.user.id === orderDetail.orders?.user.id
     )
-    .map(
-      (x) =>
-        (totalOrder +=
-          ((x.orders.product.price * (100 - x.orders.product.sale)) / 100) *
-          x.quantity)
-    );
+    .map((x) => (totalOrder += x.orders.product.price * x.quantity));
 
   function showDetail(id) {
     setVisibleDetail(true);
@@ -80,9 +78,7 @@ function OrderManaPage() {
       <div className="grid grid-cols-2 gap-2 py-3">
         <div className="w-full">
           <Input.Search
-            onChange={(e) =>
-              setTimeout(() => setValueSearch(e.target.value), 1000)
-            }
+            onSearch={(value) => setTimeout(() => setValueSearch(value), 1000)}
             size="large"
             allowClear
             placeholder="Tìm kiếm..."
@@ -94,6 +90,9 @@ function OrderManaPage() {
           <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
               <tr>
+                <th scope="col" className="px-6 py-3">
+                  STT
+                </th>
                 <th colSpan={2} scope="col" className="px-6 py-3">
                   Khách hàng
                 </th>
@@ -118,13 +117,16 @@ function OrderManaPage() {
               {currentItems
                 .reverse()
                 .filter((x) =>
-                  x.orders.user.fullname.toLowerCase().includes(valueSearch)
+                  x.orders.user.fullname
+                    .toLowerCase()
+                    .includes(valueSearch.toLowerCase())
                 )
-                .map((x) => (
+                .map((x, index) => (
                   <tr
                     key={x.id}
                     className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
+                    <td className="px-6 py-4">{index + 1}</td>
                     <td className="px-6 py-4">
                       <img
                         src={x.orders.user.avatar}
@@ -140,18 +142,22 @@ function OrderManaPage() {
                       {x.status === 4 ? "Đã thanh toán" : ""}
                     </td>
                     <td className="px-1 py-4 text-center">
-                      <Button type="primary" onClick={() => showDetail(x.id)}>
-                        Xem chi tiết
-                      </Button>
+                      <Button
+                        type="primary"
+                        onClick={() => showDetail(x.id)}
+                        icon={<FontAwesomeIcon icon={faEye} />}
+                      />
                     </td>
                     <td className="px-1 py-4 text-center">
                       <PDFDownloadLink
                         document={<PDFFile orderDetail={x} />}
                         filename="FORM"
                       >
-                        <Button type="primary" danger>
-                          Xuất hóa đơn
-                        </Button>
+                        <Button
+                          type="primary"
+                          danger
+                          icon={<FontAwesomeIcon icon={faFileExport} />}
+                        />
                       </PDFDownloadLink>
                     </td>
                   </tr>
@@ -163,7 +169,7 @@ function OrderManaPage() {
             open={visibleDetail}
             centered
             title="Chi tiết hóa đơn"
-            width={1000}
+            width={"75%"}
             onCancel={() => setVisibleDetail(false)}
           >
             <div className="grid grid-cols-2 gap-2">
@@ -233,6 +239,12 @@ function OrderManaPage() {
                         Số lượng
                       </th>
                       <th scope="col" className="px-6 py-3">
+                        Kích cỡ
+                      </th>
+                      <th scope="col" className="px-6 py-3">
+                        Màu sắc
+                      </th>
+                      <th scope="col" className="px-6 py-3">
                         Loại sản phẩm
                       </th>
                       <th scope="col" className="px-6 py-3">
@@ -256,25 +268,17 @@ function OrderManaPage() {
                         </td>
                         <td className="px-6 py-4">{x.orders.product.name}</td>
                         <td className="px-6 py-4">
-                          {(
-                            x.orders.product.price -
-                            (x.orders.product.price *
-                              (x.orders.product.sale + x.orders.code)) /
-                              100
-                          ).toLocaleString()}
-                          đ
+                          {x.orders.product.price.toLocaleString()}đ
                         </td>
                         <td className="px-6 py-4">{x.quantity}</td>
+                        <td className="px-6 py-4">{x.size}</td>
+                        <td className="px-6 py-4">{x.color}</td>
                         <td className="px-6 py-4">
                           {x.orders.product.category.name}
                         </td>
                         <td className="px-6 py-4">
                           {(
-                            (x.orders.product.price -
-                              (x.orders.product.price *
-                                (x.orders.product.sale + x.orders.code)) /
-                                100) *
-                            x.quantity
+                            x.orders.product.price * x.quantity
                           ).toLocaleString()}
                           đ
                         </td>
@@ -306,6 +310,11 @@ function OrderManaPage() {
                 </div>
               ) : (
                 <div></div>
+              )}
+              {orderDetail.fee > 0 && (
+                <div className="font-bold text-red-600 col-start-1 col-end-3">
+                  Phí vận chuyển : {orderDetail.fee.toLocaleString()}đ
+                </div>
               )}
             </div>
           </Modal>

@@ -1,11 +1,3 @@
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  add,
-  getAllContact,
-  getContactById,
-  update,
-} from "~/app/reducers/contact";
 import {
   faPlus,
   faRotateLeft,
@@ -13,11 +5,14 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button, Form, Input, Modal, Pagination, message } from "antd";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { add, getAllSize, getSizeById, update } from "~/app/reducers/size";
 import { ExportExcel } from "../../../components/Export/ExportExcel";
 import validators from "../../../services/validators";
 import { faPenToSquare } from "@fortawesome/free-regular-svg-icons";
 
-function ContactManaPage() {
+function SizeManagePage() {
   const [messageApi, contextHolder] = message.useMessage();
   const [visibleAdd, setVisibleAdd] = useState(false);
   const [visibleDelete, setVisibleDelete] = useState(false);
@@ -25,28 +20,28 @@ function ContactManaPage() {
   const [visibleUpdate, setVisibleUpdate] = useState(false);
   const [valueSearch, setValueSearch] = useState("");
   const [itemOffset, setItemOffset] = useState(0);
-  const contacts = useSelector((state) => state.contact.contacts);
-  const contact = useSelector((state) => state.contact.contact);
+  const sizes = useSelector((state) => state.size.sizes);
+  const size = useSelector((state) => state.size.size);
   const dispatch = useDispatch();
   const [form] = Form.useForm();
 
   useEffect(() => {
-    dispatch(getAllContact());
+    dispatch(getAllSize());
     // eslint-disable-next-line
   }, []);
 
   const itemsPerPage = 5;
   const endOffset = itemOffset + itemsPerPage;
-  const currentItems = contacts
+  const currentItems = sizes
     .filter((x) => x.name.toLowerCase().includes(valueSearch.toLowerCase()))
     .slice(itemOffset, endOffset);
-  const size = contacts.filter((x) =>
+  const sizess = sizes.filter((x) =>
     x.name.toLowerCase().includes(valueSearch.toLowerCase())
   ).length;
 
-  // Invoke when contact click to request another page.
+  // Invoke when user click to request another page.
   const handlePageClick = (page) => {
-    const newOffset = ((page - 1) * itemsPerPage) % contacts.length;
+    const newOffset = ((page - 1) * itemsPerPage) % sizes.length;
     setItemOffset(newOffset);
   };
 
@@ -56,59 +51,55 @@ function ContactManaPage() {
 
   function showDelete(id) {
     setVisibleDelete(true);
-    dispatch(getContactById(id));
+    dispatch(getSizeById(id));
   }
 
   function showRestore(id) {
     setVisibleRestore(true);
-    dispatch(getContactById(id));
+    dispatch(getSizeById(id));
   }
 
   function showUpdate(id) {
     setVisibleUpdate(true);
-    dispatch(getContactById(id));
+    dispatch(getSizeById(id));
   }
 
   function handleAdd(values) {
-    dispatch(add(values));
+    dispatch(add({ ...values, status: 1 }));
     setVisibleAdd(false);
     form.resetFields();
-    messageApi.success("Thêm liên hệ thành công");
+    messageApi.success("Thêm kích cỡ sản phẩm thành công");
   }
 
   function handleDelete() {
-    dispatch(update({ ...contact, status: 0 }));
+    dispatch(update({ ...size, status: 0 }));
     setVisibleDelete(false);
-    messageApi.success("Xóa liên hệ thành công");
+    messageApi.success("Xóa kích cỡ sản phẩm thành công");
   }
 
   function handleRestore() {
-    dispatch(update({ ...contact, status: 1 }));
+    dispatch(update({ ...size, status: 1 }));
     setVisibleRestore(false);
     messageApi.success("Khôi phục thành công");
   }
 
   function handleUpdate(values) {
-    dispatch(update({ ...contact, ...values }));
+    dispatch(update({ ...size, ...values }));
     setVisibleUpdate(false);
     form.resetFields();
     messageApi.success("Cập nhật thành công");
   }
 
-  const dataCsv = contacts.map((x) => ({
-    "Mã liên hệ": x.id,
-    "Khách hàng": x.name,
-    Email: x.email,
-    "Số điện thoại": x.phone,
-    "Địa chỉ": x.address,
-    "Tiêu đề": x.title,
-    "Nội dung": x.content,
+  const dataCsv = sizes.map((x) => ({
+    "Mã kích cỡ": x.id,
+    "Kích cỡ": x.name,
+    "Miêu tả": x.descriptions,
   }));
 
   return (
     <div>
       {contextHolder}
-      <div className="font-bold">Trang quản lý liên hệ</div>
+      <div className="font-bold">Trang quản lý kích cỡ sản phẩm</div>
       <div className="grid grid-cols-2 gap-2 py-3">
         <div className="w-full">
           <Input.Search
@@ -126,7 +117,7 @@ function ContactManaPage() {
           >
             <span className="mx-2">Thêm</span>
           </Button>
-          <ExportExcel apiData={dataCsv} fileName={"contacts"} />
+          <ExportExcel apiData={dataCsv} fileName={"sizes"} />
         </div>
       </div>
       <div className="mt-4">
@@ -138,21 +129,15 @@ function ContactManaPage() {
                   STT
                 </th>
                 <th scope="col" className="px-6 py-3">
-                  Tiêu đề
+                  Tên kích cỡ sản phẩm
                 </th>
                 <th scope="col" className="px-6 py-3">
-                  Họ tên
+                  Miêu tả
                 </th>
                 <th scope="col" className="px-6 py-3">
-                  Email
+                  Tình trạng
                 </th>
-                <th scope="col" className="px-6 py-3">
-                  Nội dung
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  Trạng thái
-                </th>
-                <th scope="col" colSpan={3} className="px-6 py-3 text-center">
+                <th scope="col" colSpan={2} className="px-6 py-3 text-center">
                   Thao tác
                 </th>
               </tr>
@@ -168,12 +153,10 @@ function ContactManaPage() {
                     className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
                     <td className="px-6 py-4">{index + 1}</td>
-                    <td className="px-6 py-4">{x.title}</td>
                     <td className="px-6 py-4">{x.name}</td>
-                    <td className="px-6 py-4">{x.email}</td>
-                    <td className="px-6 py-4">{x.content}</td>
+                    <td className="px-6 py-4">{x.descriptions}</td>
                     <td className="px-6 py-4">
-                      {x.status === 1 ? "Đã phản hồi" : "Chưa phản hồi"}
+                      {x.status === 1 ? "Hoạt động" : "Không hoạt động"}
                     </td>
                     <td className="px-1 py-4 text-center">
                       <Button
@@ -207,12 +190,11 @@ function ContactManaPage() {
           <Modal
             open={visibleDelete}
             onOk={handleDelete}
-            title="Xác nhận xóa liên hệ"
             onCancel={() => setVisibleDelete(false)}
           >
             <div className="text-center">
               <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-                Xác nhận xóa liên hệ này ?
+                Xác nhận xóa kích cỡ sản phẩm ?
               </h3>
             </div>
           </Modal>
@@ -224,19 +206,20 @@ function ContactManaPage() {
           >
             <div className="text-center">
               <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-                Xác nhận khôi phục liên hệ này ?
+                Xác nhận khôi phục kích cỡ sản phẩm này ?
               </h3>
             </div>
           </Modal>
           {/* Modal update */}
           <Modal
             open={visibleUpdate}
+            title="Cập nhật kích cỡ sản phẩm"
             okButtonProps={{
               form: "update-form",
               key: "submit",
               htmlType: "submit",
             }}
-            title="Cập nhật thông tin"
+            okText="Cập nhật"
             onCancel={() => setVisibleUpdate(false)}
           >
             <Form
@@ -244,26 +227,18 @@ function ContactManaPage() {
               fields={[
                 {
                   name: ["name"],
-                  value: contact.name,
+                  value: size.name,
                 },
                 {
-                  name: ["title"],
-                  value: contact.title,
-                },
-                {
-                  name: ["content"],
-                  value: contact.content,
-                },
-                {
-                  name: ["email"],
-                  value: contact.email,
+                  name: ["descriptions"],
+                  value: size.descriptions,
                 },
               ]}
               id="update-form"
               onFinish={handleUpdate}
             >
               <Form.Item
-                label="Họ tên"
+                label="Kích cỡ"
                 labelCol={{ span: 24 }}
                 wrapperCol={{ span: 24 }}
                 name="name"
@@ -271,7 +246,7 @@ function ContactManaPage() {
                 rules={[
                   {
                     required: true,
-                    message: "Vui lòng nhập họ tên !",
+                    message: "Vui lòng nhập kích cỡ !",
                   },
                   {
                     validator(_, value) {
@@ -286,18 +261,18 @@ function ContactManaPage() {
                   },
                 ]}
               >
-                <Input placeholder="Họ tên" size="large" />
+                <Input placeholder="Kích cỡ" size="large" />
               </Form.Item>
               <Form.Item
-                label="Tiêu đề"
+                label="Miêu tả"
                 labelCol={{ span: 24 }}
                 wrapperCol={{ span: 24 }}
-                name="title"
+                name="descriptions"
                 hasFeedback
                 rules={[
                   {
                     required: true,
-                    message: "Vui lòng nhập tiêu đề !",
+                    message: "Vui lòng nhập miêu tả !",
                   },
                   {
                     validator(_, value) {
@@ -312,77 +287,24 @@ function ContactManaPage() {
                   },
                 ]}
               >
-                <Input placeholder="Tiêu đề" size="large" />
-              </Form.Item>
-              <Form.Item
-                label="Nội dung"
-                labelCol={{ span: 24 }}
-                wrapperCol={{ span: 24 }}
-                name="content"
-                hasFeedback
-                rules={[
-                  {
-                    required: true,
-                    message: "Vui lòng nhập nội dung !",
-                  },
-                  {
-                    validator(_, value) {
-                      return new Promise((resolve, reject) => {
-                        if (validators.space.test(value)) {
-                          reject("Không bao gồm khoảng trắng ở đầu !");
-                        } else {
-                          resolve();
-                        }
-                      });
-                    },
-                  },
-                ]}
-              >
-                <Input.TextArea size="large" placeholder="Nội dung" />
-              </Form.Item>
-              <Form.Item
-                label="Email"
-                labelCol={{ span: 24 }}
-                wrapperCol={{ span: 24 }}
-                name="email"
-                hasFeedback
-                rules={[
-                  {
-                    required: true,
-                    message: "Vui lòng nhập email !",
-                  },
-                  {
-                    validator(_, value) {
-                      return new Promise((resolve, reject) => {
-                        if (!validators.email.test(value)) {
-                          reject("Nhập sai định dạng email !");
-                        } else {
-                          resolve();
-                        }
-                      });
-                    },
-                  },
-                ]}
-              >
-                <Input size="large" placeholder="Email" />
+                <Input size="large" placeholder="Miêu tả" />
               </Form.Item>
             </Form>
           </Modal>
           {/* Modal add */}
           <Modal
             open={visibleAdd}
-            title="Thêm mới liên hệ"
+            title="Thêm mới kích cỡ sản phẩm"
             okButtonProps={{
               form: "add-form",
               key: "submit",
               htmlType: "submit",
             }}
-            onOk={handleAdd}
             onCancel={() => setVisibleAdd(false)}
           >
             <Form form={form} id="add-form" onFinish={handleAdd}>
               <Form.Item
-                label="Họ tên"
+                label="Kích cỡ"
                 labelCol={{ span: 24 }}
                 wrapperCol={{ span: 24 }}
                 name="name"
@@ -390,7 +312,7 @@ function ContactManaPage() {
                 rules={[
                   {
                     required: true,
-                    message: "Vui lòng nhập họ tên !",
+                    message: "Vui lòng nhập kích cỡ !",
                   },
                   {
                     validator(_, value) {
@@ -405,18 +327,18 @@ function ContactManaPage() {
                   },
                 ]}
               >
-                <Input placeholder="Họ tên" size="large" />
+                <Input placeholder="Kích cỡ" size="large" />
               </Form.Item>
               <Form.Item
-                label="Tiêu đề"
+                label="Miêu tả"
                 labelCol={{ span: 24 }}
                 wrapperCol={{ span: 24 }}
-                name="title"
+                name="descriptions"
                 hasFeedback
                 rules={[
                   {
                     required: true,
-                    message: "Vui lòng nhập tiêu đề !",
+                    message: "Vui lòng nhập miêu tả !",
                   },
                   {
                     validator(_, value) {
@@ -431,59 +353,7 @@ function ContactManaPage() {
                   },
                 ]}
               >
-                <Input placeholder="Tiêu đề" size="large" />
-              </Form.Item>
-              <Form.Item
-                label="Nội dung"
-                labelCol={{ span: 24 }}
-                wrapperCol={{ span: 24 }}
-                name="content"
-                hasFeedback
-                rules={[
-                  {
-                    required: true,
-                    message: "Vui lòng nhập nội dung !",
-                  },
-                  {
-                    validator(_, value) {
-                      return new Promise((resolve, reject) => {
-                        if (validators.space.test(value)) {
-                          reject("Không bao gồm khoảng trắng ở đầu !");
-                        } else {
-                          resolve();
-                        }
-                      });
-                    },
-                  },
-                ]}
-              >
-                <Input.TextArea size="large" placeholder="Nội dung" />
-              </Form.Item>
-              <Form.Item
-                label="Email"
-                labelCol={{ span: 24 }}
-                wrapperCol={{ span: 24 }}
-                name="email"
-                hasFeedback
-                rules={[
-                  {
-                    required: true,
-                    message: "Vui lòng nhập email !",
-                  },
-                  {
-                    validator(_, value) {
-                      return new Promise((resolve, reject) => {
-                        if (!validators.email.test(value)) {
-                          reject("Nhập sai định dạng email !");
-                        } else {
-                          resolve();
-                        }
-                      });
-                    },
-                  },
-                ]}
-              >
-                <Input size="large" placeholder="Email" />
+                <Input size="large" placeholder="Miêu tả" />
               </Form.Item>
             </Form>
           </Modal>
@@ -495,7 +365,7 @@ function ContactManaPage() {
             defaultCurrent={1}
             onChange={handlePageClick}
             pageSize={itemsPerPage}
-            total={size}
+            total={sizess}
           />
         </div>
       </div>
@@ -503,4 +373,4 @@ function ContactManaPage() {
   );
 }
 
-export default ContactManaPage;
+export default SizeManagePage;

@@ -5,6 +5,7 @@ import {
   faRightFromBracket,
   faShield,
   faStore,
+  faTicket,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -86,10 +87,19 @@ function DefaultLayoutAdmin(props) {
         config.routes.contactManage
       ),
       getItem(
-        <Link to={config.routes.voucher}>Quản lý voucher</Link>,
-        config.routes.voucher
+        <Link to={config.routes.colorManage}>Quản lý màu sắc</Link>,
+        config.routes.colorManage
+      ),
+      getItem(
+        <Link to={config.routes.sizeManage}>Quản lý kích cỡ</Link>,
+        config.routes.sizeManage
       ),
     ]),
+    getItem(
+      <Link to={config.routes.voucher}>Voucher sản phẩm</Link>,
+      config.routes.voucher,
+      <FontAwesomeIcon icon={faTicket} />
+    ),
     getItem(
       <Link to={config.routes.authorityManage}>Phân quyền</Link>,
       config.routes.authorityManage,
@@ -142,7 +152,7 @@ function DefaultLayoutAdmin(props) {
           >
             <div className="flex justify-end">
               <div className="font-bold ml-6">
-                Xin chào {currentUser.fullname} !
+                Welcome {currentUser.fullname} !
               </div>
             </div>
           </Layout.Header>
@@ -174,7 +184,7 @@ function DefaultLayoutAdmin(props) {
               textAlign: "center",
             }}
           >
-            ©2023 Shop Gym
+            ©2023 Ganimeshop
           </Layout.Footer>
         </Layout>
       </Layout>

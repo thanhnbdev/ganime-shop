@@ -21,6 +21,8 @@ const routes = {
   customerManage: "/admin/customer-manage",
   personnelManage: "/admin/personnel-manage",
   contactManage: "/admin/contact-manage",
+  sizeManage: "/admin/size-manage",
+  colorManage: "/admin/color-manage",
   atStore: "/admin/at-store",
   notfound: "/*",
 };

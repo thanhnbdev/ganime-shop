@@ -12,9 +12,9 @@ import {
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { getAllOrderDetail } from "~/app/reducers/orderDetail";
 import { getAllProduct } from "~/app/reducers/product";
 import { getAllUser } from "~/app/reducers/user";
-import { getAllOrderDetail } from "~/app/reducers/orderDetail";
 
 function DashboardPage() {
   const products = useSelector((state) => state.product.products);
@@ -50,7 +50,7 @@ function DashboardPage() {
           <img src={statis} alt="statis" className="h-36" />
         </div>
         <div className="border-2 p-2 border-gray-100 col-start-2 col-end-6 rounded-md">
-          <div className="h-1/5 font-bold mb-1">Thông số thống kê</div>
+          <div className="h-1/5 font-bold mb-2">Thông số thống kê</div>
           <div className="grid grid-cols-4 gap-2 h-4/5">
             <div className="bg-red-400 rounded-md p-2 text-white">
               <p>Tổng số sản phẩm</p>
@@ -101,9 +101,7 @@ function DashboardPage() {
                 <div className="col-start-2 col-end-6 flex justify-center items-center text-xl">
                   {
                     users.filter((x) =>
-                      x.role.some(
-                        (x) => x.name === "ADMIN" || x.name === "NHÂN VIÊN"
-                      )
+                      x.role.some((x) => x.name === "NHÂN VIÊN")
                     ).length
                   }
                 </div>
