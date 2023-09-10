@@ -51,12 +51,12 @@ const slice = createSlice({
     });
     builder.addCase(getSizeById.fulfilled, (state, action) => {
       state.loading = false;
-      state.Size = action.payload;
+      state.size = action.payload;
       state.error = "";
     });
     builder.addCase(getSizeById.rejected, (state, action) => {
       state.loading = false;
-      state.Size = {};
+      state.size = {};
       state.error = action.error.message;
     });
 

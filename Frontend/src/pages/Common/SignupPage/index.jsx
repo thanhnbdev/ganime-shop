@@ -1,46 +1,29 @@
-import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { add } from "~/app/reducers/user";
 import banner from "~/assets/images/banner.svg";
-
-import { useDispatch, useSelector } from "react-redux";
-import { add, getAllUser } from "~/app/reducers/user";
-
 import logo from "../../../assets/images/logo-gym.png";
 
-import { Button, Input, message } from "antd";
-import { Link, useNavigate } from "react-router-dom";
+import { Button, Form, Input, message } from "antd";
+import { Link } from "react-router-dom";
+import validators from "../../../services/validators";
 
 function SignupPage() {
   const [messageApi, contextHolder] = message.useMessage();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullname, setFullname] = useState("");
-  const [email, setEmail] = useState("");
-  const users = useSelector((state) => state.user.users);
+  const [form] = Form.useForm();
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    dispatch(getAllUser());
-  }, []);
-
-  function handleSubmit() {
-    if (username && fullname && password && email) {
-      dispatch(
-        add({
-          username: username,
-          fullname: fullname,
-          password: password,
-          email: email,
-        })
-      );
-      setUsername("");
-      setFullname("");
-      setPassword("");
-      setEmail("");
-      messageApi.success("Đăng ký thành công !");
-    } else {
-      messageApi.error("Không được để trống !");
-    }
+  function handleSubmit(value) {
+    dispatch(
+      add({
+        username: value.username,
+        fullname: value.fullname,
+        phone: value.phone,
+        password: value.password,
+        email: value.email,
+      })
+    );
+    messageApi.success("Đăng ký thành công !");
+    form.resetFields();
   }
 
   return (
@@ -54,64 +37,156 @@ function SignupPage() {
           <div className="mt-5">ĐĂNG KÝ TÀI KHOẢN</div>
         </div>
         <div className="mt-8 mx-16">
-          <div className="mb-4">
-            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-              Tên đăng nhập
-            </label>
-            <Input
-              type="text"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              placeholder="Tên đăng nhập"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-              Mật khẩu
-            </label>
-            <Input
-              type="password"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              placeholder="Mật khẩu"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-              Họ và tên
-            </label>
-            <Input
-              type="text"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              placeholder="Họ và tên"
-              value={fullname}
-              onChange={(e) => setFullname(e.target.value)}
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-              Email
-            </label>
-            <Input
-              type="text"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <Button
-            type="primary"
-            className="w-full"
-            onClick={() => handleSubmit()}
+          <Form
+            form={form}
+            name="normal_signup"
+            className="signup-form"
+            initialValues={{
+              remember: true,
+            }}
+            onFinish={handleSubmit}
           >
-            Đăng ký
-          </Button>
-          <div className="mt-6">
+            <Form.Item
+              label="Tên đăng nhập"
+              labelCol={{ span: 24 }}
+              wrapperCol={{ span: 24 }}
+              name="username"
+              hasFeedback
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng nhập username !",
+                },
+                {
+                  validator(_, value) {
+                    return new Promise((resolve, reject) => {
+                      if (validators.space.test(value)) {
+                        reject("Không bao gồm khoảng trắng ở đầu !");
+                      } else {
+                        resolve();
+                      }
+                    });
+                  },
+                },
+              ]}
+            >
+              <Input placeholder="Username" size="large" />
+            </Form.Item>
+            <Form.Item
+              label="Mật khẩu"
+              labelCol={{ span: 24 }}
+              wrapperCol={{ span: 24 }}
+              name="password"
+              hasFeedback
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng nhập mật khẩu !",
+                },
+                {
+                  validator(_, value) {
+                    return new Promise((resolve, reject) => {
+                      if (validators.space.test(value)) {
+                        reject("Không bao gồm khoảng trắng ở đầu !");
+                      } else {
+                        resolve();
+                      }
+                    });
+                  },
+                },
+              ]}
+            >
+              <Input.Password size="large" placeholder="Password" />
+            </Form.Item>
+            <Form.Item
+              label="Họ tên"
+              labelCol={{ span: 24 }}
+              wrapperCol={{ span: 24 }}
+              name="fullname"
+              hasFeedback
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng nhập fullname !",
+                },
+                {
+                  validator(_, value) {
+                    return new Promise((resolve, reject) => {
+                      if (validators.space.test(value)) {
+                        reject("Không bao gồm khoảng trắng ở đầu !");
+                      } else {
+                        resolve();
+                      }
+                    });
+                  },
+                },
+              ]}
+            >
+              <Input placeholder="Họ tên" size="large" />
+            </Form.Item>
+            <Form.Item
+              label="Số điện thoại"
+              labelCol={{ span: 24 }}
+              wrapperCol={{ span: 24 }}
+              name="phone"
+              hasFeedback
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng nhập số điện thoại !",
+                },
+                {
+                  validator(_, value) {
+                    return new Promise((resolve, reject) => {
+                      if (!validators.phone.test(value)) {
+                        reject("Không đúng định dạng số điện thoại !");
+                      } else {
+                        resolve();
+                      }
+                    });
+                  },
+                },
+              ]}
+            >
+              <Input placeholder="Số điện thoại" size="large" />
+            </Form.Item>
+            <Form.Item
+              label="Email"
+              labelCol={{ span: 24 }}
+              wrapperCol={{ span: 24 }}
+              name="email"
+              hasFeedback
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng nhập email !",
+                },
+                {
+                  validator(_, value) {
+                    return new Promise((resolve, reject) => {
+                      if (!validators.email.test(value)) {
+                        reject("Nhập sai định dạng email !");
+                      } else {
+                        resolve();
+                      }
+                    });
+                  },
+                },
+              ]}
+            >
+              <Input placeholder="Email" size="large" />
+            </Form.Item>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" className="w-full">
+                ĐĂNG KÝ
+              </Button>
+            </Form.Item>
+          </Form>
+          <div className="mt-3 mb-6">
             <div className="text-center">
-              <Link to={"/login"}>Đăng nhập ngay</Link>
+              <Link to={"/login"} className="no-underline">
+                Đăng nhập ngay
+              </Link>
             </div>
           </div>
         </div>

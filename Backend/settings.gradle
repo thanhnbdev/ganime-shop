@@ -5,4 +5,4 @@ pluginManagement {
 		gradlePluginPortal()
 	}
 }
-rootProject.name = 'shop-v1'
+rootProject.name = 'Ganimeshop'

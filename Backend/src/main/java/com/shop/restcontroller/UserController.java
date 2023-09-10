@@ -67,6 +67,7 @@ public class UserController {
 		u.setEmail(user.getEmail());
 		u.setFullname(user.getFullname());
 		u.setUsername(user.getUsername());
+		u.setPhone(user.getPhone());
 		u.setStatus(1);
 		repository.save(u);
 		auth.setUser(u);

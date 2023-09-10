@@ -1,10 +1,5 @@
-import { useDispatch, useSelector } from "react-redux";
-
-import { Link } from "react-router-dom";
-import config from "~/config";
-
-import HeaderLayout from "~/layouts/HeaderLayout";
 import FooterLayout from "~/layouts/FooterLayout";
+import HeaderLayout from "~/layouts/HeaderLayout";
 
 function AboutPage() {
   return (
@@ -17,15 +12,22 @@ function AboutPage() {
       <br />
       <br />
       <div className="bg-slate-100 py-4 px-44">
-        <div className="text-center font-bold mt-10">Giới thiệu về SHOP GANIME</div>
+        <div className="text-center font-bold mt-10">
+          Giới thiệu về Ganimeshop
+        </div>
         <div className="grid grid-cols-2 gap-4 mt-6">
           <div>
             <div className="font-bold">Thông tin liên hệ</div>
             <div className="mt-4">
               <div>
-              GANIME Shop tự hào là một trong những shop đi đầu trong lĩnh vực Anime - Manga .
-• Khi đến với shop , các bạn sẽ được chìm đắm trong không gian ngập tràn những sản phẩm về Anime / Manga mà bạn yêu thích như One Piece , Naruto , Dragon Ball , .... xuất hiện trên những chiếc Balo , những mẫu áo thun đầy màu sắc , một Figure của chính nhân vật đó và hàng ngàn sản phẩm thú vị khác ^^
-• Bên cạnh đó , nếu bạn là một game thủ hoặc là fan của Marvel hay DC , shop cũng cũng cung cấp những sản phẩm về nhân vật siêu anh hùng mà bạn yêu thích.
+                Ra đời từ 2014, thương hiệu thời trang nam 360 xác định sứ mệnh
+                giúp các chàng trai trở nên đẹp hơn với phiên bản của chính
+                mình. Ngày nay nam giới trẻ đang đứng những cơ hội tuyệt vời của
+                xã hội hiện đại, công nghệ thông tin phát triển, cuộc cách mạng
+                của các trang mạng xã hội để khẳng định bản thân. Bên cạnh đó,
+                360 hiểu rằng người trẻ cũng đang phải đối diện với những áp
+                lực, thử thách thôi thúc bản thân phải thể hiên mình so với
+                những người khác.
               </div>
               <div className="mt-4">
                 Với mong muốn được đồng hành, truyền cảm hứng và khuyến khích

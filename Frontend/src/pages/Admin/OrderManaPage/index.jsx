@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { faFileExcel } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
 import { Button, Input, Modal, Pagination, Steps, message } from "antd";
-import { CSVLink } from "react-csv";
 import { update as updateOrder } from "~/app/reducers/order";
 import {
   getAllOrderDetail,
@@ -14,6 +10,10 @@ import {
 } from "~/app/reducers/orderDetail";
 import { update as updateProduct } from "~/app/reducers/product";
 import { getAllVoucher, update as updateVoucher } from "~/app/reducers/voucher";
+import { ExportExcel } from "../../../components/Export/ExportExcel";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye } from "@fortawesome/free-regular-svg-icons";
+import { faCheck, faTimeline } from "@fortawesome/free-solid-svg-icons";
 
 function OrderManaPage() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -41,18 +41,25 @@ function OrderManaPage() {
       arr.findIndex(
         (y) =>
           y.orders.user.id === x.orders.user.id &&
-          y.orders.date === x.orders.date
+          y.orders.date === x.orders.date &&
+          y.orders.status === x.orders.status
       ) === i
   );
 
   const itemsPerPage = 5;
   const endOffset = itemOffset + itemsPerPage;
-  const currentItems = arrFilter.slice(itemOffset, endOffset);
-  const size = arrFilter.length;
+  const currentItems = arrFilter
+    .filter((x) =>
+      x.orders.user?.fullname.toLowerCase().includes(valueSearch.toLowerCase())
+    )
+    .slice(itemOffset, endOffset);
+  const size = arrFilter.filter((x) =>
+    x.orders.user?.fullname.toLowerCase().includes(valueSearch.toLowerCase())
+  ).length;
 
   // Invoke when user click to request another page.
   const handlePageClick = (page) => {
-    const newOffset = ((page - 1) * itemsPerPage) % arrFilter.length;
+    const newOffset = ((page - 1) * itemsPerPage) % size;
     setItemOffset(newOffset);
   };
 
@@ -60,7 +67,8 @@ function OrderManaPage() {
     return ordersDetailHistoryAdmin.filter(
       (x) =>
         x.orders.user.id === orderDetail.orders?.user.id &&
-        x.orders.date === orderDetail.orders?.date
+        x.orders.date === orderDetail.orders?.date &&
+        x.orders.status === orderDetail.orders?.status
     );
   }
 
@@ -69,14 +77,10 @@ function OrderManaPage() {
     .filter(
       (x) =>
         x.orders.user.id === orderDetail.orders?.user.id &&
-        x.orders.date === orderDetail.orders?.date
+        x.orders.date === orderDetail.orders?.date &&
+        x.orders.status === orderDetail.orders?.status
     )
-    .map(
-      (x) =>
-        (totalOrder +=
-          ((x.orders.product.price * (100 - x.orders.product.sale)) / 100) *
-          x.quantity)
-    );
+    .map((x) => (totalOrder += x.orders.product.price * x.quantity));
 
   function showDetail(id) {
     setVisibleDetail(true);
@@ -144,18 +148,15 @@ function OrderManaPage() {
     setVisibleVerify(false);
   }
 
-  const dataCsv = [];
-  ordersDetailHistoryAdmin.map((x) =>
-    dataCsv.push({
-      MaDonHang: x.id,
-      KhachHang: x.orders.user.fullname,
-      SanPham: x.orders.product.name,
-      GiaSanPham: x.orders.product.price,
-      NgayDatHang: x.orders.date,
-      SoLuong: x.quantity,
-      KichCo: x.size,
-    })
-  );
+  const dataCsv = ordersDetailHistoryAdmin.map((x) => ({
+    "Mã đơn hàng": x.id,
+    "Khách hàng": x.orders.user.fullname,
+    "Sản phẩm": x.orders.product.name,
+    "Giá bán": x.orders.product.price,
+    "Ngày đặt hàng": x.orders.date,
+    "Số lượng": x.quantity,
+    "Kích cỡ": x.size,
+  }));
 
   return (
     <div>
@@ -165,8 +166,8 @@ function OrderManaPage() {
         <div>
           <div className="w-full">
             <Input.Search
-              onChange={(e) =>
-                setTimeout(() => setValueSearch(e.target.value), 1000)
+              onSearch={(value) =>
+                setTimeout(() => setValueSearch(value), 1000)
               }
               size="large"
               allowClear
@@ -175,15 +176,7 @@ function OrderManaPage() {
           </div>
         </div>
         <div className="flex justify-end">
-          <Button
-            type="primary"
-            style={{ backgroundColor: "#27ae60" }}
-            icon={<FontAwesomeIcon icon={faFileExcel} />}
-          >
-            <CSVLink data={dataCsv} className="mx-2">
-              Export
-            </CSVLink>
-          </Button>
+          <ExportExcel apiData={dataCsv} fileName={"orders"} />
         </div>
       </div>
       <div className="mt-4">
@@ -192,7 +185,7 @@ function OrderManaPage() {
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th scope="col" className="px-6 py-3">
-                  ID
+                  STT
                 </th>
                 <th scope="col" className="px-6 py-3">
                   Khách hàng
@@ -218,14 +211,16 @@ function OrderManaPage() {
               {currentItems
                 .reverse()
                 .filter((x) =>
-                  x.orders.user.fullname.toLowerCase().includes(valueSearch)
+                  x.orders.user?.fullname
+                    .toLowerCase()
+                    .includes(valueSearch.toLowerCase())
                 )
-                .map((x) => (
+                .map((x, index) => (
                   <tr
                     key={x.id}
                     className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
-                    <td className="px-6 py-4">{x.id}</td>
+                    <td className="px-6 py-4">{index + 1}</td>
                     <td className="px-6 py-4">{x.orders.user.fullname}</td>
                     <td className="px-6 py-4">{x.orders?.product.name}</td>
                     <td className="px-6 py-4">{x.size}</td>
@@ -239,28 +234,30 @@ function OrderManaPage() {
                         )
                         .reduce((acc, o) => acc + parseInt(o.quantity), 0)}
                     </td>
-                    <td className="px-1 py-4 text-center">
-                      <Button type="primary" onClick={() => showDetail(x.id)}>
-                        Xem chi tiết
-                      </Button>
-                    </td>
-                    <td className="px-1 py-4 text-center">
+                    <td className="px-2 py-4 text-center">
                       <Button
                         type="primary"
-                        danger
-                        onClick={() => showVerify(x.id)}
-                      >
-                        Xác thực
-                      </Button>
+                        onClick={() => showDetail(x.id)}
+                        icon={<FontAwesomeIcon icon={faEye} />}
+                      />
                     </td>
-                    <td className="px-1 py-4 text-center">
+                    {x.status !== 5 && (
+                      <td className="px-2 py-4 text-center">
+                        <Button
+                          type="primary"
+                          danger
+                          onClick={() => showVerify(x.id)}
+                          icon={<FontAwesomeIcon icon={faCheck} />}
+                        />
+                      </td>
+                    )}
+                    <td className="px-2 py-4 text-center">
                       <Button
                         type="primary"
                         style={{ backgroundColor: "#22a6b3" }}
                         onClick={() => showStep(x.id)}
-                      >
-                        Trạng thái đơn
-                      </Button>
+                        icon={<FontAwesomeIcon icon={faTimeline} />}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -270,9 +267,10 @@ function OrderManaPage() {
           <Modal
             open={visibleDetail}
             centered
-            width={800}
+            width={"80%"}
             title="Thông tin chi tiết đơn hàng"
             okText="Xác thực"
+            cancelText="Đóng"
             onOk={() => showVerify(orderDetail.id)}
             onCancel={() => setVisibleDetail(false)}
           >
@@ -365,12 +363,7 @@ function OrderManaPage() {
                         </td>
                         <td className="px-6 py-4">{x.orders.product.name}</td>
                         <td className="px-6 py-4">
-                          {(
-                            x.orders.product.price -
-                            (x.orders.product.price * x.orders.product.sale) /
-                              100
-                          ).toLocaleString()}
-                          đ
+                          {x.orders.product.price.toLocaleString()}đ
                         </td>
                         <td className="px-6 py-4">{x.quantity}</td>
                         <td className="px-6 py-4">
@@ -378,10 +371,7 @@ function OrderManaPage() {
                         </td>
                         <td className="px-6 py-4">
                           {(
-                            (x.orders.product.price -
-                              (x.orders.product.price * x.orders.product.sale) /
-                                100) *
-                            x.quantity
+                            x.orders.product.price * x.quantity
                           ).toLocaleString()}
                           đ
                         </td>
@@ -436,10 +426,14 @@ function OrderManaPage() {
             width={"80%"}
             title="Trạng thái đơn hàng"
             okText={`${
-              orderDetail.status === 2
-                ? "Xác nhận thanh toán"
-                : "Xác nhận giao hàng thành công"
+              orderDetail.status === 5 ? "Đơn hàng đã bị hủy" : "Bước tiếp theo"
             }`}
+            okButtonProps={{
+              style: {
+                backgroundColor: orderDetail.status === 5 ? "red" : "",
+                display: orderDetail.status >= 4 ? "none" : "inline-block",
+              },
+            }}
             onOk={handleStep}
             onCancel={() => setVisibleStep(false)}
           >
@@ -452,28 +446,20 @@ function OrderManaPage() {
                 items={[
                   {
                     title: "Đặt đơn hàng",
-                    status: "finish",
+                    status: `${orderDetail.status === 5 ? "error" : ""}`,
                     description: orderDetail.orders?.date,
                   },
                   {
                     title: "Xác nhận đơn hàng",
-                    status: "finish",
-                    description: "Đã được xác nhận",
+                    status: `${orderDetail.status === 5 ? "error" : ""}`,
                   },
                   {
-                    title: "Chờ thanh toán",
-                    status: `${
-                      orderDetail.status === 3 ? "finish" : "process"
-                    }`,
-                    description: `${
-                      orderDetail.status === 3
-                        ? "Đơn hàng đã thanh toán"
-                        : "Đang chờ thanh toán"
-                    }`,
+                    title: "Thanh toán",
+                    status: `${orderDetail.status === 5 ? "error" : ""}`,
                   },
                   {
-                    title: "Giao thành công",
-                    status: `${orderDetail.status === 4 ? "finish" : "wait"}`,
+                    title: "Giao hàng",
+                    status: `${orderDetail.status === 5 ? "error" : ""}`,
                     description: orderDetail.orders?.date,
                   },
                 ]}

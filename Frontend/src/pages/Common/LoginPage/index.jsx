@@ -1,25 +1,23 @@
-import { useState } from "react";
 import banner from "~/assets/images/banner.svg";
 
 import logo from "../../../assets/images/logo-gym.png";
 
+import { Button, Form, Input, message } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import http from "~/services/apiService";
-import { Button, Input, message } from "antd";
+import validators from "../../../services/validators";
 
 function LoginPage() {
   const [messageApi, contextHolder] = message.useMessage();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  function handleSubmit() {
+  function handleSubmit(value) {
     http
-      .httpGet(`user/${username}/${password}`)
+      .httpGet(`user/${value.username}/${value.password}`)
       .then((res) => {
         if (res.id > 0) {
           navigate("/");
-          window.localStorage.setItem("username", username);
+          window.localStorage.setItem("username", value.username);
           window.localStorage.setItem("id", res.id);
           setTimeout(() => {
             window.location.reload();
@@ -42,42 +40,72 @@ function LoginPage() {
           <div className="mt-5">ĐĂNG NHẬP</div>
         </div>
         <div className="mt-8">
-          <div className="mb-6">
-            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-              Tên đăng nhập
-            </label>
-            <Input
-              type="text"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              placeholder="Tên đăng nhập"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-          <div className="mb-6">
-            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-              Mật khẩu
-            </label>
-            <Input
-              type="password"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              placeholder="Mật khẩu"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <Button
-            type="primary"
-            className="w-full"
-            onClick={() => handleSubmit()}
-          >
-            Đăng nhập
-          </Button>
+          <Form onFinish={handleSubmit}>
+            <Form.Item
+              label="Tên đăng nhập"
+              labelCol={{ span: 24 }}
+              wrapperCol={{ span: 24 }}
+              name="username"
+              hasFeedback
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng nhập username !",
+                },
+                {
+                  validator(_, value) {
+                    return new Promise((resolve, reject) => {
+                      if (validators.space.test(value)) {
+                        reject("Không bao gồm khoảng trắng ở đầu !");
+                      } else {
+                        resolve();
+                      }
+                    });
+                  },
+                },
+              ]}
+            >
+              <Input placeholder="Username" size="large" />
+            </Form.Item>
+            <Form.Item
+              label="Mật khẩu"
+              labelCol={{ span: 24 }}
+              wrapperCol={{ span: 24 }}
+              name="password"
+              hasFeedback
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng nhập mật khẩu !",
+                },
+                {
+                  validator(_, value) {
+                    return new Promise((resolve, reject) => {
+                      if (validators.space.test(value)) {
+                        reject("Không bao gồm khoảng trắng ở đầu !");
+                      } else {
+                        resolve();
+                      }
+                    });
+                  },
+                },
+              ]}
+            >
+              <Input.Password size="large" placeholder="Password" />
+            </Form.Item>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" className="w-full">
+                ĐĂNG NHẬP
+              </Button>
+            </Form.Item>
+          </Form>
           <div className="mt-6">
             <div className="text-center">
               Bạn chưa có tài khoản ?{" "}
               <span>
-                <Link to={"/signup"}>Đăng ký ngay</Link>
+                <Link to={"/signup"} className="no-underline">
+                  Đăng ký ngay
+                </Link>
               </span>
             </div>
           </div>

@@ -25,6 +25,8 @@ import AuthorityManaPage from "~/pages/Admin/AuthorityManaPage";
 import VoucherManaPage from "~/pages/Admin/VoucherManaPage";
 import DefaultLayoutAdmin from "~/layouts/DefaultLayoutAdmin";
 import AtStorePage from "../pages/Admin/AtStorePage";
+import SizeManagePage from "../pages/Admin/SizeManaPage";
+import ColorManagePage from "../pages/Admin/ColorManaPage";
 
 // Routes public
 
@@ -90,6 +92,16 @@ const privateRoutes = [
   {
     path: config.routes.voucher,
     component: VoucherManaPage,
+    layout: DefaultLayoutAdmin,
+  },
+  {
+    path: config.routes.sizeManage,
+    component: SizeManagePage,
+    layout: DefaultLayoutAdmin,
+  },
+  {
+    path: config.routes.colorManage,
+    component: ColorManagePage,
     layout: DefaultLayoutAdmin,
   },
 ];

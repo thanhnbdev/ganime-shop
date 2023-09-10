@@ -48,10 +48,7 @@ const slice = createSlice({
         .filter((x) => x.selected === true && x.status === 1)
         .reduce(
           (accumulator, currentValue) =>
-            accumulator +
-            (currentValue.product.price -
-              (currentValue.product.price * currentValue.product.sale) / 100) *
-              currentValue.quantity,
+            accumulator + currentValue.product.price * currentValue.quantity,
           0
         );
       state.error = "";
@@ -94,10 +91,7 @@ const slice = createSlice({
         .filter((x) => x.selected === true && x.status === 1)
         .reduce(
           (accumulator, currentValue) =>
-            accumulator +
-            (currentValue.product.price -
-              (currentValue.product.price * currentValue.product.sale) / 100) *
-              currentValue.quantity,
+            accumulator + currentValue.product.price * currentValue.quantity,
           0
         );
     });

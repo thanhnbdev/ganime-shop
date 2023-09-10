@@ -41,6 +41,9 @@ public class OrderDetail implements Serializable {
 	
 	@Column(nullable = false, length = 20)
 	private String color;
+	
+	@Column(nullable = false, precision = 12)
+	private float fee;
 
 	@ManyToOne(optional = false, cascade = CascadeType.ALL)
 	@JoinColumn(name = "order_id", nullable = false)

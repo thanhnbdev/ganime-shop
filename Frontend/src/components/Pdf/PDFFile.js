@@ -33,6 +33,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "bold",
   },
+  content: {
+    marginBottom: 20,
+    marginLeft: 50,
+    marginRight: 50,
+    fontWeight: "bold",
+  },
 });
 
 const PDFFile = (props) => {
@@ -40,12 +46,15 @@ const PDFFile = (props) => {
     <Document>
       <Page style={styles.body}>
         <Text style={styles.header} fixed>
-          <Text>================ THỜI TRANG SHOP V ================</Text>
+          <Text>================ THỜI TRANG Ganimeshop ================</Text>
         </Text>
         <Text style={{ textAlign: "center" }}>
           Địa chỉ : số 1 đường Trịnh Văn Bô – Nam Từ Liêm – Hà Nội
         </Text>
         <Text style={styles.title}>HÓA ĐƠN BÁN HÀNG</Text>
+        <Text style={styles.content}>
+          Khách hàng : {props.orderDetail.orders.user.fullname}
+        </Text>
         <Text style={{ textAlign: "center" }}>Hẹn gặp lại quý khách !</Text>
       </Page>
     </Document>

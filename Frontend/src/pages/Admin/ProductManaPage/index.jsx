@@ -1,21 +1,30 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllCategory } from "~/app/reducers/category";
+import { getAllProduct, getProductById, update } from "~/app/reducers/product";
+import http from "~/services/apiService";
+
+import { faEye, faPenToSquare } from "@fortawesome/free-regular-svg-icons";
 import {
-  add,
-  getAllProduct,
-  getProductById,
-  update,
-} from "~/app/reducers/product";
-
-import { CSVLink } from "react-csv";
-
-import { faFileExcel, faPlus } from "@fortawesome/free-solid-svg-icons";
+  faPlus,
+  faRotateLeft,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button, Input, Modal, Pagination, message } from "antd";
-import { Field, Form, Formik } from "formik";
+import {
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Pagination,
+  Select,
+  message,
+} from "antd";
 import { getAllColor } from "../../../app/reducers/color";
 import { getAllSize } from "../../../app/reducers/size";
+import { ExportExcel } from "../../../components/Export/ExportExcel";
+import validators from "../../../services/validators";
 
 function ProductManaPage() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -24,7 +33,13 @@ function ProductManaPage() {
   const [visibleDelete, setVisibleDelete] = useState(false);
   const [visibleRestore, setVisibleRestore] = useState(false);
   const [visibleUpdate, setVisibleUpdate] = useState(false);
+  const [flag, setFlag] = useState(false);
+  const [image, setImage] = useState("");
+  const [url, setUrl] = useState("");
   const [valueSearch, setValueSearch] = useState("");
+  const [sizeSearch, setSizeSearch] = useState("");
+  const [colorSearch, setColorSearch] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
   const [itemOffset, setItemOffset] = useState(0);
   const products = useSelector((state) => state.product.products);
   const sizes = useSelector((state) => state.size.sizes);
@@ -32,6 +47,7 @@ function ProductManaPage() {
   const product = useSelector((state) => state.product.product);
   const categories = useSelector((state) => state.category.categories);
   const dispatch = useDispatch();
+  const [form] = Form.useForm();
 
   useEffect(() => {
     dispatch(getAllProduct());
@@ -39,18 +55,34 @@ function ProductManaPage() {
     dispatch(getAllSize());
     dispatch(getAllColor());
     // eslint-disable-next-line
-  }, []);
+  }, [flag]);
 
   const itemsPerPage = 5;
   const endOffset = itemOffset + itemsPerPage;
-  const currentItems = products.slice(itemOffset, endOffset);
-  const size = products.filter((x) =>
-    x.name.toLowerCase().includes(valueSearch)
+  const currentItems = products
+    .filter(
+      (x) =>
+        x.name?.toLowerCase().includes(valueSearch?.toLowerCase()) &&
+        x?.category?.name
+          ?.toLowerCase()
+          .includes(categorySearch?.toLowerCase()) &&
+        x.color.some((y) => y.name.includes(colorSearch)) &&
+        x.size.some((y) => y.name.includes(sizeSearch))
+    )
+    .slice(itemOffset, endOffset);
+  const size = products.filter(
+    (x) =>
+      x.name?.toLowerCase().includes(valueSearch?.toLowerCase()) &&
+      x?.category?.name
+        ?.toLowerCase()
+        .includes(categorySearch?.toLowerCase()) &&
+      x.color.some((y) => y.name.includes(colorSearch)) &&
+      x.size.some((y) => y.name.includes(sizeSearch))
   ).length;
 
   // Invoke when user click to request another page.
   const handlePageClick = (page) => {
-    const newOffset = ((page - 1) * itemsPerPage) % products.length;
+    const newOffset = ((page - 1) * itemsPerPage) % size;
     setItemOffset(newOffset);
   };
 
@@ -78,32 +110,27 @@ function ProductManaPage() {
     dispatch(getProductById(id));
   }
 
-  function validateForm(values) {
-    const errors = {};
-    if (values.name.length === 0) {
-      errors.name = "Required";
-    }
-    return errors;
-  }
-
   function handleAdd(values) {
-    dispatch(
-      add({
-        product: {
-          name: values.name,
-          image: values.image,
-          price: values.price,
-          description: values.description,
-          brand: values.brand,
-          status: values.status,
-          sale: values.sale,
-          quantity: values.quantity,
-          category: categories.find((x) => x.id === Number(values.category)),
-        },
-        size: values.size,
-      })
-    );
+    http.httpPost("product/add-new", {
+      product: {
+        name: values.name,
+        image: url,
+        price: values.price,
+        description: values.description,
+        brand: values.brand,
+        status: 1,
+        quantity: values.quantity,
+        category: categories.find((x) => x.id === Number(values.category)),
+      },
+      sizeColor: {
+        size: sizes.filter((x) => values.size.some((y) => y === x.id)),
+        color: colors.filter((x) => values.size.some((y) => y === x.id)),
+      },
+    });
     setVisibleAdd(false);
+    form.resetFields();
+    setUrl("");
+    setFlag(!flag);
     messageApi.success("Thêm sản phẩm thành công");
   }
 
@@ -125,47 +152,57 @@ function ProductManaPage() {
         ...values,
         category: categories.find((x) => x.id === Number(values.category)),
         size: product.size,
+        id: product.id,
+        image: url,
+        status: 1,
       })
     );
     setVisibleUpdate(false);
+    form.resetFields();
+    setUrl("");
     messageApi.success("Cập nhật thành công");
   }
 
   function formatListSize(item) {
-    const arr = [];
-    item?.map((x) => {
-      arr.push(x.name);
-    });
-    return arr.join(", ");
+    return item?.map((x) => x.name).join(", ");
   }
 
-  const dataCsv = [];
-  products.map((x) =>
-    dataCsv.push({
-      MaSanPham: x.id,
-      TenSanPham: x.name,
-      AnhSanPham: x.image,
-      GiaSanPham: x.price,
-      MieuTa: x.description,
-      ThuongHieu: x.brand,
-      KhuyenMai: x.sale,
-      SoLuong: x.quantity,
-      LoaiSanPham: x.category.name,
-      KichCo: formatListSize(x.size),
-      MauSac: formatListSize(x.color),
+  const dataCsv = products.map((x) => ({
+    "Mã sản phẩm": x.id,
+    "Tên sản phẩm": x.name,
+    "Ảnh sản phẩm": x.image,
+    "Giá sản phẩm": x.price,
+    "Miêu tả": x.description,
+    "Thương hiệu": x.brand,
+    "Số lượng": x.quantity,
+    "Loại sản phẩm": x.category?.name,
+    "Kích cỡ": formatListSize(x.size),
+    "Màu sắc": formatListSize(x.color),
+  }));
+
+  const uploadImage = (e) => {
+    const data = new FormData();
+    data.append("file", e.target.files[0]);
+    data.append("upload_preset", "ganime");
+    data.append("cloud_name", "dyrc9s2gx");
+    fetch("https://api.cloudinary.com/v1_1/dyrc9s2gx/image/upload", {
+      method: "post",
+      body: data,
     })
-  );
+      .then((resp) => resp.json())
+      .then((data) => {
+        setUrl(data.url);
+      })
+      .catch((err) => console.log(err));
+  };
 
   return (
     <div>
       {contextHolder}
-      <div className="font-bold">Trang quản lý sản phẩm</div>
-      <div className="grid grid-cols-2 gap-2 py-3">
+      <div className="grid grid-cols-2 gap-2 py-2">
         <div className="w-full">
           <Input.Search
-            onChange={(e) =>
-              setTimeout(() => setValueSearch(e.target.value), 1000)
-            }
+            onSearch={(value) => setTimeout(() => setValueSearch(value), 1000)}
             size="large"
             allowClear
             placeholder="Tìm kiếm..."
@@ -179,15 +216,48 @@ function ProductManaPage() {
           >
             <span className="mx-2">Thêm</span>
           </Button>
-          <Button
-            type="primary"
-            style={{ backgroundColor: "#27ae60" }}
-            icon={<FontAwesomeIcon icon={faFileExcel} />}
-          >
-            <CSVLink data={dataCsv} className="mx-2">
-              Export
-            </CSVLink>
-          </Button>
+          <ExportExcel apiData={dataCsv} fileName={"products"} />
+        </div>
+        <div className="col-start-1 col-end-3 grid grid-cols-3 gap-x-3">
+          <Select
+            showSearch
+            filterOption={(input, option) =>
+              (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+            }
+            placeholder="Lọc theo loại sản phẩm"
+            size="large"
+            onChange={(value) => setCategorySearch(value)}
+            options={categories.map((x) => ({
+              value: x.name,
+              label: x.name,
+            }))}
+          />
+          <Select
+            showSearch
+            filterOption={(input, option) =>
+              (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+            }
+            placeholder="Lọc theo màu sắc"
+            size="large"
+            onChange={(value) => setColorSearch(value)}
+            options={colors.map((x) => ({
+              value: x.name,
+              label: x.name,
+            }))}
+          />
+          <Select
+            showSearch
+            filterOption={(input, option) =>
+              (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+            }
+            placeholder="Lọc theo kích cỡ"
+            size="large"
+            onChange={(value) => setSizeSearch(value)}
+            options={sizes.map((x) => ({
+              value: x.name,
+              label: x.name,
+            }))}
+          />
         </div>
       </div>
       <div className="mt-4">
@@ -196,7 +266,7 @@ function ProductManaPage() {
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th scope="col" className="px-6 py-3">
-                  ID
+                  STT
                 </th>
                 <th scope="col" className="px-6 py-3">
                   Ảnh
@@ -208,25 +278,38 @@ function ProductManaPage() {
                   Giá
                 </th>
                 <th scope="col" className="px-6 py-3">
-                  Giảm giá
+                  Số lượng tồn
                 </th>
                 <th scope="col" className="px-6 py-3">
                   Tình trạng
                 </th>
-                <th scope="col" colSpan={3} className="px-6 py-3 text-center">
+                <th scope="col" className="px-6 py-3">
+                  Trạng thái
+                </th>
+                <th scope="col" colSpan={3} className="text-center">
                   Thao tác
                 </th>
               </tr>
             </thead>
             <tbody>
               {currentItems
-                .filter((x) => x.name.toLowerCase().includes(valueSearch))
-                .map((x) => (
+                .filter(
+                  (x) =>
+                    x.name
+                      ?.toLowerCase()
+                      .includes(valueSearch?.toLowerCase()) &&
+                    x?.category?.name
+                      ?.toLowerCase()
+                      .includes(categorySearch?.toLowerCase()) &&
+                    x.color.some((y) => y.name.includes(colorSearch)) &&
+                    x.size.some((y) => y.name.includes(sizeSearch))
+                )
+                .map((x, index) => (
                   <tr
                     key={x.id}
                     className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
-                    <td className="px-6 py-4">{x.id}</td>
+                    <td className="text-center">{index + 1}</td>
                     <td className="px-6 py-4">
                       <img
                         src={x.image}
@@ -234,45 +317,44 @@ function ProductManaPage() {
                         className="h-12 w-12 rounded-md"
                       />
                     </td>
-                    <td className="px-6 py-4">{x.name}</td>
-                    <td className="px-6 py-4">{x.price.toLocaleString()}đ</td>
-                    <td className="px-6 py-4">
-                      {x.sale === 0 ? "Không có" : `${x.sale}%`}
+                    <td className="py-4">{x.name}</td>
+                    <td className="py-4">{x.price.toLocaleString()}đ</td>
+                    <td className="text-center">{x.quantity}</td>
+                    <td className="py-4">
+                      {x.quantity === 0 ? "Hết hàng" : "Còn hàng"}
                     </td>
-                    <td className="px-6 py-4">
-                      {x.status === 1 ? "Còn hàng" : "Hết hàng"}
+                    <td className="py-4">
+                      {x.status === 1 ? "Còn bán" : "Không còn bán"}
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <Button type="primary" onClick={() => showDetail(x.id)}>
-                        Xem chi tiết
-                      </Button>
+                    <td className="px-2 py-4 text-center">
+                      <Button
+                        type="primary"
+                        onClick={() => showDetail(x.id)}
+                        icon={<FontAwesomeIcon icon={faEye} />}
+                      />
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-2 py-4 text-center">
                       <Button
                         type="primary"
                         style={{ backgroundColor: "#1abc9c" }}
                         onClick={() => showUpdate(x.id)}
-                      >
-                        Chỉnh sửa
-                      </Button>
+                        icon={<FontAwesomeIcon icon={faPenToSquare} />}
+                      />
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-2 py-4 text-center">
                       {x.status === 1 ? (
                         <Button
                           type="primary"
                           danger
                           onClick={() => showDelete(x.id)}
-                        >
-                          Xóa
-                        </Button>
+                          icon={<FontAwesomeIcon icon={faTrash} />}
+                        />
                       ) : (
                         <Button
                           type="default"
-                          danger
                           onClick={() => showRestore(x.id)}
-                        >
-                          Khôi phục
-                        </Button>
+                          icon={<FontAwesomeIcon icon={faRotateLeft} />}
+                        />
                       )}
                     </td>
                   </tr>
@@ -305,12 +387,12 @@ function ProductManaPage() {
                   {product.price?.toLocaleString()}đ
                 </div>
                 <div>
-                  <span className="font-bold">Giảm giá</span> :{" "}
-                  {product.sale === 0 ? "Không có" : `${product.sale}%`}
-                </div>
-                <div>
                   <span className="font-bold">Miêu tả</span> :{" "}
                   {product.description}
+                </div>
+                <div>
+                  <span className="font-bold">Loại sản phẩm</span> :{" "}
+                  {product?.category?.name}
                 </div>
                 <div>
                   <span className="font-bold">Kích cỡ</span> :{" "}
@@ -326,7 +408,7 @@ function ProductManaPage() {
                 </div>
                 <div>
                   <span className="font-bold">Tình trạng</span> :{" "}
-                  {product.status === 1 ? "Còn hàng" : "Hết hàng"}
+                  {product.quantity > 0 ? "Còn hàng" : "Hết hàng"}
                 </div>
                 <div>
                   <span className="font-bold">Thương hiệu</span> :{" "}
@@ -371,130 +453,261 @@ function ProductManaPage() {
               key: "update-submit",
               htmlType: "submit",
             }}
+            width={"80%"}
             onCancel={() => setVisibleUpdate(false)}
           >
-            <Formik
-              enableReinitialize
-              initialValues={{
-                ...product,
-                name: product.name || "",
-                price: product.price || "",
-                brand: product.brand || "",
-                quantity: product.quantity || 0,
-                size: product.size?.name || "",
-                category: product.category?.id || "",
-                description: product.description || "",
-                image: product.image || "",
-              }}
-              onSubmit={(values) => handleUpdate(values)}
+            <Form
+              form={form}
+              id="update-form"
+              className="grid grid-cols-3 gap-x-3"
+              fields={[
+                {
+                  name: ["image"],
+                  value: product.image,
+                },
+                {
+                  name: ["name"],
+                  value: product.name,
+                },
+                {
+                  name: ["price"],
+                  value: product.price,
+                },
+                {
+                  name: ["brand"],
+                  value: product.brand,
+                },
+                {
+                  name: ["quantity"],
+                  value: product.quantity,
+                },
+                {
+                  name: ["description"],
+                  value: product.description,
+                },
+                {
+                  name: ["category"],
+                  value: product.category?.id,
+                },
+              ]}
+              onFinish={handleUpdate}
             >
-              {({
-                values,
-                /* and other goodies */
-              }) => (
-                <Form id="update-form">
-                  <div>
-                    <div>
-                      <label>Ảnh</label>
-                      <Field
-                        type="text"
-                        name="image"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.image}
-                      />
-                    </div>
-                    <div>
-                      <label>Tên sản phẩm</label>
-                      <Field
-                        type="text"
-                        name="name"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.name}
-                      />
-                    </div>
-                    <div>
-                      <label>Giá sản phẩm</label>
-                      <Field
-                        type="text"
-                        name="price"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.price}
-                      />
-                    </div>
-                    <div>
-                      <label>Thương hiệu</label>
-                      <Field
-                        type="text"
-                        name="brand"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.brand}
-                      />
-                    </div>
-                    <div>
-                      <label>Số lượng</label>
-                      <Field
-                        type="text"
-                        name="quantity"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.quantity}
-                      />
-                    </div>
-                    <div>
-                      <label>Chi tiết</label>
-                      <Field
-                        type="text"
-                        name="description"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.description}
-                      />
-                    </div>
-                    <div>
-                      <label>Loại sản phẩm</label>
-                      <Field
-                        as="select"
-                        type="text"
-                        name="category"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.category}
-                      >
-                        {categories.map((x) => (
-                          <option key={x.id} value={x.id}>
-                            {x.name}
-                          </option>
-                        ))}
-                      </Field>
-                    </div>
-                    <div>
-                      <label>Kích cỡ</label>
-                      <div>
-                        {product.size?.map((x) => (
-                          <span
-                            key={x.id}
-                            className="inline-flex items-center px-2 py-1 mr-2 text-sm font-medium text-blue-800 bg-blue-100 rounded"
-                          >
-                            {x.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label>Màu sắc</label>
-                      <div>
-                        {product.color?.map((x) => (
-                          <span
-                            key={x.id}
-                            style={{ backgroundColor: x.descriptions }}
-                            className="inline-flex items-center px-2 py-1 mr-2 text-sm font-medium text-white rounded"
-                          >
-                            {x.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </Form>
-              )}
-            </Formik>
+              <Form.Item className="text-center">
+                <img
+                  src={url.length > 0 ? url : product.image}
+                  alt="img"
+                  className="w-full h-48 rounded-md"
+                />
+              </Form.Item>
+              <Form.Item
+                label="Ảnh"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập ảnh sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input
+                  type="file"
+                  name="image"
+                  accept="image/*"
+                  onChange={(e) => uploadImage(e)}
+                />
+              </Form.Item>
+              <Form.Item
+                label="Tên sản phẩm"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="name"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập tên sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Tên sản phẩm" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Giá sản phẩm"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="price"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập giá sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (!validators.positiveIntNum.test(value)) {
+                          reject("Nhập sai định dạng số !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <InputNumber size="large" className="w-full" />
+              </Form.Item>
+              <Form.Item
+                label="Thương hiệu"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="brand"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập thương hiệu sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Thương hiệu sản phẩm" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Số lượng"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="quantity"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập số lượng sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (!validators.positiveIntNum.test(value)) {
+                          reject("Nhập sai định dạng số !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <InputNumber size="large" className="w-full" />
+              </Form.Item>
+              <Form.Item
+                label="Chi tiết sản phẩm"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="description"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập chi tiết sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Chi tiết sản phẩm" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Loại sản phẩm"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="category"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng chọn loại sản phẩm !",
+                  },
+                ]}
+              >
+                <Select
+                  size="large"
+                  options={categories.map((x) => ({
+                    value: x.id,
+                    label: x.name,
+                  }))}
+                />
+              </Form.Item>
+              <div>
+                <label>Kích cỡ</label>
+                <div>
+                  {product.size?.map((x) => (
+                    <span
+                      key={x.id}
+                      className="inline-flex items-center px-2 py-1 mr-2 text-sm font-medium text-blue-800 bg-blue-100 rounded"
+                    >
+                      {x.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label>Màu sắc</label>
+                <div>
+                  {product.color?.map((x) => (
+                    <span
+                      key={x.id}
+                      style={{ backgroundColor: x.descriptions }}
+                      className="inline-flex items-center px-2 py-1 mr-2 text-sm font-medium text-white rounded"
+                    >
+                      {x.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </Form>
           </Modal>
           {/* Modal add */}
           <Modal
@@ -506,151 +719,287 @@ function ProductManaPage() {
               key: "submit",
               htmlType: "submit",
             }}
-            width={800}
+            width={"80%"}
             onCancel={() => setVisibleAdd(false)}
           >
-            <Formik
-              enableReinitialize
-              initialValues={{
-                ...product,
-                category: categories[0]?.id,
-                name: product.name || "",
-                price: product.price || "",
-                sale: product.sale || "",
-                brand: product.brand || "",
-                quantity: product.quantity || "",
-                size: sizes[0],
-                color: colors[0],
-                description: product.description || "",
-                image: product.image || "",
-                status: 1,
-              }}
-              onSubmit={(values) => handleAdd(values)}
+            <Form
+              id="add-form"
+              form={form}
+              fields={[
+                {
+                  name: ["quantityy"],
+                  value: 1,
+                },
+              ]}
+              className="grid grid-cols-3 gap-x-3"
+              onFinish={handleAdd}
             >
-              {({
-                values,
-                /* and other goodies */
-              }) => (
-                <Form id="add-form">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label>Ảnh</label>
-                      <Field
-                        type="text"
-                        name="image"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.image}
-                      />
-                    </div>
-                    <div>
-                      <label>Tên sản phẩm</label>
-                      <Field
-                        type="text"
-                        name="name"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.name}
-                      />
-                    </div>
-                    <div>
-                      <label>Giá sản phẩm</label>
-                      <Field
-                        type="text"
-                        name="price"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.price}
-                      />
-                    </div>
-                    <div>
-                      <label>Giảm giá</label>
-                      <Field
-                        type="text"
-                        name="sale"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.sale}
-                      />
-                    </div>
-                    <div>
-                      <label>Số lượng</label>
-                      <Field
-                        type="text"
-                        name="quantity"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.quantity}
-                      />
-                    </div>
-                    <div>
-                      <label>Thương hiệu</label>
-                      <Field
-                        type="text"
-                        name="brand"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.brand}
-                      />
-                    </div>
-                    <div>
-                      <label>Chi tiết</label>
-                      <Field
-                        type="text"
-                        name="description"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.description}
-                      />
-                    </div>
-                    <div>
-                      <label>Kích cỡ</label>
-                      <Field
-                        as="select"
-                        type="text"
-                        name="size"
-                        defaultValue={values.id}
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.size?.id}
-                      >
-                        {sizes.map((x) => (
-                          <option key={x.id} value={x}>
-                            {x.name}
-                          </option>
-                        ))}
-                      </Field>
-                    </div>
-                    <div>
-                      <label>Màu sắc</label>
-                      <Field
-                        as="select"
-                        type="text"
-                        name="color"
-                        defaultValue={values.id}
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.color?.id}
-                      >
-                        {colors.map((x) => (
-                          <option key={x.id} value={x}>
-                            {x.name}
-                          </option>
-                        ))}
-                      </Field>
-                    </div>
-                    <div>
-                      <label>Loại sản phẩm</label>
-                      <Field
-                        as="select"
-                        type="text"
-                        name="category"
-                        defaultValue={values.id}
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.category?.id}
-                      >
-                        {categories.map((x) => (
-                          <option key={x.id} value={x.id}>
-                            {x.name}
-                          </option>
-                        ))}
-                      </Field>
-                    </div>
-                  </div>
-                </Form>
+              {url.length > 0 && (
+                <Form.Item>
+                  <img src={url} alt="img" className="w-full h-48 rounded-md" />
+                </Form.Item>
               )}
-            </Formik>
+              <Form.Item
+                label="Ảnh"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập ảnh sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input
+                  type="file"
+                  name="image"
+                  accept="image/*"
+                  onChange={(e) => uploadImage(e)}
+                />
+              </Form.Item>
+              <Form.Item
+                label="Tên sản phẩm"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="name"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập tên sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Tên sản phẩm" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Giá sản phẩm"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="price"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập giá sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (!validators.positiveIntNum.test(value)) {
+                          reject("Nhập sai định dạng số !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <InputNumber size="large" className="w-full" />
+              </Form.Item>
+              <Form.Item
+                label="Thương hiệu"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="brand"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập thương hiệu sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Thương hiệu sản phẩm" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Số lượng"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="quantity"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập số lượng sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (!validators.positiveIntNum.test(value)) {
+                          reject("Nhập sai định dạng số !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <InputNumber size="large" className="w-full" />
+              </Form.Item>
+              <Form.Item
+                label="Chi tiết sản phẩm"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="description"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập chi tiết sản phẩm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Chi tiết sản phẩm" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Loại sản phẩm"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="category"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng chọn loại sản phẩm !",
+                  },
+                ]}
+              >
+                <Select
+                  size="large"
+                  options={categories.map((x) => ({
+                    value: x.id,
+                    label: x.name,
+                  }))}
+                />
+              </Form.Item>
+              <Form.Item
+                label="Kích cỡ"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="size"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng chọn kích cỡ sản phẩm !",
+                  },
+                ]}
+              >
+                <Select
+                  mode="multiple"
+                  allowClear
+                  maxTagCount={"responsive"}
+                  size="large"
+                  options={sizes.map((x) => ({
+                    value: x.id,
+                    label: x.name,
+                  }))}
+                />
+              </Form.Item>
+              <Form.Item
+                label="Màu sắc"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="color"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng chọn màu sắc sản phẩm !",
+                  },
+                ]}
+              >
+                <Select
+                  mode="multiple"
+                  allowClear
+                  maxTagCount={"responsive"}
+                  size="large"
+                  options={colors.map((x) => ({
+                    value: x.id,
+                    label: x.name,
+                  }))}
+                />
+              </Form.Item>
+              <Form.Item
+                label="Số lượng sản phẩm thêm (Nếu thêm nhiều sản phẩm)"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="quantityy"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập số lượng sản phẩm thêm !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (!validators.positiveIntNum.test(value)) {
+                          reject("Nhập sai định dạng số !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <InputNumber
+                  size="large"
+                  className="w-full"
+                  min={1}
+                  max={100}
+                />
+              </Form.Item>
+            </Form>
           </Modal>
         </div>
         <div className="flex justify-center items-center mt-3">

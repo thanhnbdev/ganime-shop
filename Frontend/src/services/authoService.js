@@ -4,7 +4,7 @@ let username = window.localStorage.getItem("username");
 
 const currentUser = async () => {
   return await axios
-    .get("http://localhost:8080/api/user")
+    .get("http://localhost:8081/api/user")
     .then((res) => getListUser(res))
     .catch((error) => {
       throw Error(error);

@@ -37,6 +37,9 @@ public class Size implements Serializable {
 	@Column(nullable = false, length = 255)
 	private String descriptions;
 	
+	@Column(nullable = false, precision = 10)
+	private int status;
+	
 	@OneToMany(mappedBy = "size")
 	@JsonIgnore
 	private Set<ProductSize> productSize;

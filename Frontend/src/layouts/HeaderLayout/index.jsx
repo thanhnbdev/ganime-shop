@@ -44,25 +44,25 @@ function HeaderLayout(props) {
             <span className="pr-2">
               <FontAwesomeIcon icon={faLocationDot} />
             </span>
-            Hà Nội, Việt Nam
+            Đà Nẵng, Việt Nam
           </div>
           <div className="text-sm">
             <span className="pr-2">
               <FontAwesomeIcon icon={faPhone} />
             </span>
-            0987654321
+            +84 899797061
           </div>
           <div className="text-sm">
             <span className="pr-2">
               <FontAwesomeIcon icon={faEnvelope} />
             </span>
-            ganime@gmail.com
+            ganimeshop@gmail.com
           </div>
         </div>
         <div className="grid grid-cols-2">
           <div className="text-sm">
             {currentUser?.id > 0 ? (
-              <span>Xin chào, {currentUser?.fullname} !</span>
+              <span>Welcome, {currentUser?.fullname} !</span>
             ) : (
               <div>
                 <span className="pr-2">

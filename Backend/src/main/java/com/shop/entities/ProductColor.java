@@ -32,5 +32,9 @@ public class ProductColor implements Serializable {
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "color_id", nullable = false)
 	private Color color;
+	
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "product_id", nullable = false)
+	private Product product;
 
 }

@@ -39,7 +39,7 @@ const slice = createSlice({
     });
     builder.addCase(getAllProduct.fulfilled, (state, action) => {
       state.loading = false;
-      state.products = action.payload;
+      state.products = action.payload.sort((a, b) => a.id - b.id);
       state.error = "";
     });
     builder.addCase(getAllProduct.rejected, (state, action) => {

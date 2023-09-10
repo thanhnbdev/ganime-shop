@@ -1,5 +1,5 @@
-import logo from "~/assets/images/logo-gym.png";
 import { Link } from "react-router-dom";
+import logo from "~/assets/images/logo-gym.png";
 import config from "~/config";
 
 function FooterLayout() {
@@ -22,7 +22,7 @@ function FooterLayout() {
                   href="/"
                   className="hover:underline no-underline text-slate-400"
                 >
-                  Thời trang nam
+                  Thời trang tập gym nam
                 </a>
               </li>
               <li className="mb-4 list-none">
@@ -30,7 +30,7 @@ function FooterLayout() {
                   href="/"
                   className="hover:underline no-underline text-slate-400"
                 >
-                  Thời trang nữ
+                  Thời trang tập gym nữ
                 </a>
               </li>
               <li className="mb-4 list-none">
@@ -38,7 +38,7 @@ function FooterLayout() {
                   href="/"
                   className="hover:underline no-underline text-slate-400"
                 >
-                  Thời trang theo mùa
+                  Thời trang theo mùa gym
                 </a>
               </li>
               <li className="mb-4 list-none">
@@ -46,7 +46,7 @@ function FooterLayout() {
                   href="/"
                   className="hover:underline no-underline text-slate-400"
                 >
-                  Phụ kiện
+                  Phụ kiện tập gym
                 </a>
               </li>
             </ul>
@@ -79,7 +79,7 @@ function FooterLayout() {
               Địa chỉ
             </h2>
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3723.8838220318858!2d105.74640787517664!3d21.037334080614126!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31345515f14a641f%3A0xe7f2a647f98416cb!2sFPT%20Polytechnic!5e0!3m2!1sen!2s!4v1690203575739!5m2!1sen!2s"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1916.9187207105188!2d108.14751029839476!3d16.073923200000017!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x314218d68dff9545%3A0x714561e9f3a7292c!2zVHLGsOG7nW5nIMSQ4bqhaSBo4buNYyBCw6FjaCBLaG9hIC0gxJDhuqFpIGjhu41jIMSQw6AgTuG6tW5n!5e0!3m2!1svi!2s!4v1688257788490!5m2!1svi!2s"
               width="350"
               height="200"
               loading="lazy"
@@ -90,8 +90,8 @@ function FooterLayout() {
         <div className="px-4 py-6 bg-gray-100 dark:bg-gray-700 md:flex md:items-center md:justify-between">
           <span className="text-sm text-gray-500 dark:text-gray-300 sm:text-center">
             © 2023{" "}
-            <a className="no-underline">
-              Ganime
+            <a href="https://flowbite.com/" className="no-underline">
+              Ganimeshop™
             </a>
             . All Rights Reserved.
           </span>

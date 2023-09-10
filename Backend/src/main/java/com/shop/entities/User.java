@@ -53,6 +53,9 @@ public class User implements Serializable {
 	@Column(nullable = false, length = 255)
 	private String avatar;
 	
+	@Column(nullable = false, length = 255)
+	private String phone;
+	
 	@Column(nullable = false, precision = 10)
 	private int status;
 	

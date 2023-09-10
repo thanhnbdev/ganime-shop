@@ -1,0 +1,376 @@
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { add, getAllColor, getColorById, update } from "~/app/reducers/color";
+import {
+  faPlus,
+  faRotateLeft,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Button, Form, Input, Modal, Pagination, message } from "antd";
+import { ExportExcel } from "../../../components/Export/ExportExcel";
+import validators from "../../../services/validators";
+import { faPenToSquare } from "@fortawesome/free-regular-svg-icons";
+
+function ColorManagePage() {
+  const [messageApi, contextHolder] = message.useMessage();
+  const [visibleAdd, setVisibleAdd] = useState(false);
+  const [visibleDelete, setVisibleDelete] = useState(false);
+  const [visibleRestore, setVisibleRestore] = useState(false);
+  const [visibleUpdate, setVisibleUpdate] = useState(false);
+  const [valueSearch, setValueSearch] = useState("");
+  const [itemOffset, setItemOffset] = useState(0);
+  const colors = useSelector((state) => state.color.colors);
+  const color = useSelector((state) => state.color.color);
+  const dispatch = useDispatch();
+  const [form] = Form.useForm();
+
+  useEffect(() => {
+    dispatch(getAllColor());
+    // eslint-disable-next-line
+  }, []);
+
+  const itemsPerPage = 5;
+  const endOffset = itemOffset + itemsPerPage;
+  const currentItems = colors
+    .filter((x) => x.name.toLowerCase().includes(valueSearch.toLowerCase()))
+    .slice(itemOffset, endOffset);
+  const sizess = colors.filter((x) =>
+    x.name.toLowerCase().includes(valueSearch.toLowerCase())
+  ).length;
+
+  // Invoke when user click to request another page.
+  const handlePageClick = (page) => {
+    const newOffset = ((page - 1) * itemsPerPage) % colors.length;
+    setItemOffset(newOffset);
+  };
+
+  function showAdd() {
+    setVisibleAdd(true);
+  }
+
+  function showDelete(id) {
+    setVisibleDelete(true);
+    dispatch(getColorById(id));
+  }
+
+  function showRestore(id) {
+    setVisibleRestore(true);
+    dispatch(getColorById(id));
+  }
+
+  function showUpdate(id) {
+    setVisibleUpdate(true);
+    dispatch(getColorById(id));
+  }
+
+  function handleAdd(values) {
+    dispatch(add({ ...values, status: 1 }));
+    setVisibleAdd(false);
+    form.resetFields();
+    messageApi.success("Thêm màu sắc sản phẩm thành công");
+  }
+
+  function handleDelete() {
+    dispatch(update({ ...color, status: 0 }));
+    setVisibleDelete(false);
+    messageApi.success("Xóa màu sắc sản phẩm thành công");
+  }
+
+  function handleRestore() {
+    dispatch(update({ ...color, status: 1 }));
+    setVisibleRestore(false);
+    messageApi.success("Khôi phục thành công");
+  }
+
+  function handleUpdate(values) {
+    dispatch(update({ ...color, ...values }));
+    setVisibleUpdate(false);
+    form.resetFields();
+    messageApi.success("Cập nhật thành công");
+  }
+
+  const dataCsv = colors.map((x) => ({
+    "Mã màu sắc": x.id,
+    "Màu sắc": x.name,
+    "Miêu tả": x.descriptions,
+  }));
+
+  return (
+    <div>
+      {contextHolder}
+      <div className="font-bold">Trang quản lý màu sắc sản phẩm</div>
+      <div className="grid grid-cols-2 gap-2 py-3">
+        <div className="w-full">
+          <Input.Search
+            onSearch={(value) => setTimeout(() => setValueSearch(value), 1000)}
+            size="large"
+            allowClear
+            placeholder="Tìm kiếm..."
+          />
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button
+            type="primary"
+            onClick={() => showAdd()}
+            icon={<FontAwesomeIcon icon={faPlus} />}
+          >
+            <span className="mx-2">Thêm</span>
+          </Button>
+          <ExportExcel apiData={dataCsv} fileName={"colors"} />
+        </div>
+      </div>
+      <div className="mt-4">
+        <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+          <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+              <tr>
+                <th scope="col" className="px-6 py-3">
+                  STT
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  Tên màu sắc sản phẩm
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  Miêu tả
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  Tình trạng
+                </th>
+                <th scope="col" colSpan={2} className="px-6 py-3 text-center">
+                  Thao tác
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentItems
+                .filter((x) =>
+                  x.name.toLowerCase().includes(valueSearch.toLowerCase())
+                )
+                .map((x, index) => (
+                  <tr
+                    key={x.id}
+                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                  >
+                    <td className="px-6 py-4">{index + 1}</td>
+                    <td className="px-6 py-4">{x.name}</td>
+                    <td className="px-6 py-4">{x.descriptions}</td>
+                    <td className="px-6 py-4">
+                      {x.status === 1 ? "Hoạt động" : "Không hoạt động"}
+                    </td>
+                    <td className="px-1 py-4 text-center">
+                      <Button
+                        type="primary"
+                        onClick={() => showUpdate(x.id)}
+                        icon={<FontAwesomeIcon icon={faPenToSquare} />}
+                      />
+                    </td>
+                    <td className="px-1 py-4 text-center">
+                      {x.status === 1 ? (
+                        <Button
+                          type="primary"
+                          danger
+                          onClick={() => showDelete(x.id)}
+                          icon={<FontAwesomeIcon icon={faTrash} />}
+                        />
+                      ) : (
+                        <Button
+                          type="default"
+                          danger
+                          onClick={() => showRestore(x.id)}
+                          icon={<FontAwesomeIcon icon={faRotateLeft} />}
+                        />
+                      )}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+          {/* Modal delete */}
+          <Modal
+            open={visibleDelete}
+            onOk={handleDelete}
+            onCancel={() => setVisibleDelete(false)}
+          >
+            <div className="text-center">
+              <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                Xác nhận xóa màu sắc sản phẩm ?
+              </h3>
+            </div>
+          </Modal>
+          {/* Modal restore */}
+          <Modal
+            open={visibleRestore}
+            onOk={handleRestore}
+            onCancel={() => setVisibleRestore(false)}
+          >
+            <div className="text-center">
+              <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                Xác nhận khôi phục màu sắc sản phẩm này ?
+              </h3>
+            </div>
+          </Modal>
+          {/* Modal update */}
+          <Modal
+            open={visibleUpdate}
+            title="Cập nhật màu sắc sản phẩm"
+            okButtonProps={{
+              form: "update-form",
+              key: "submit",
+              htmlType: "submit",
+            }}
+            okText="Cập nhật"
+            onCancel={() => setVisibleUpdate(false)}
+          >
+            <Form
+              form={form}
+              fields={[
+                {
+                  name: ["name"],
+                  value: color.name,
+                },
+                {
+                  name: ["descriptions"],
+                  value: color.descriptions,
+                },
+              ]}
+              id="update-form"
+              onFinish={handleUpdate}
+            >
+              <Form.Item
+                label="Tên màu"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="name"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập tên màu !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Tên màu" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Mã màu"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="descriptions"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập mã màu !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input size="large" placeholder="Mã màu" />
+              </Form.Item>
+            </Form>
+          </Modal>
+          {/* Modal add */}
+          <Modal
+            open={visibleAdd}
+            title="Thêm mới màu sắc sản phẩm"
+            okButtonProps={{
+              form: "add-form",
+              key: "submit",
+              htmlType: "submit",
+            }}
+            onCancel={() => setVisibleAdd(false)}
+          >
+            <Form form={form} id="add-form" onFinish={handleAdd}>
+              <Form.Item
+                label="Tên màu"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="name"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập tên màu !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Tên màu" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Mã màu"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="descriptions"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập mã màu !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input size="large" placeholder="Mã màu" />
+              </Form.Item>
+            </Form>
+          </Modal>
+        </div>
+        <div className="flex justify-center items-center mt-3">
+          {/* Pagination */}
+          <Pagination
+            showSizeChanger={false}
+            defaultCurrent={1}
+            onChange={handlePageClick}
+            pageSize={itemsPerPage}
+            total={sizess}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default ColorManagePage;

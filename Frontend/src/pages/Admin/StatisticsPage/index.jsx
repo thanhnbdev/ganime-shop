@@ -1,14 +1,14 @@
-import PieChart from "~/components/ChartJs/PieChart";
-import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
-import { getAllProduct } from "~/app/reducers/product";
+import { useDispatch, useSelector } from "react-redux";
 import { getAllCategory } from "~/app/reducers/category";
-import { getAllOrder } from "~/app/reducers/order";
 import { getAllFeedback } from "~/app/reducers/feedback";
+import { getAllOrder } from "~/app/reducers/order";
+import { getAllProduct } from "~/app/reducers/product";
+import PieChart from "~/components/ChartJs/PieChart";
 
-import { getAllContact } from "~/app/reducers/contact";
-import { getAllOrderDetail } from "../../../app/reducers/orderDetail";
 import { Progress } from "antd";
+import { getAllContact } from "~/app/reducers/contact";
+import { ExportExcel } from "../../../components/Export/ExportExcel";
 
 function StatisticsPage() {
   const products = useSelector((state) => state.product.products);
@@ -71,6 +71,26 @@ function StatisticsPage() {
     return sum;
   }
 
+  const result = products.map((x) => ({
+    id: x.id,
+    product: x.name,
+    category: x.category.name,
+    price: x.price,
+    sold: getProductQuantity(x),
+    quantity: x.quantity,
+  }));
+  const dataCsv = products.map(
+    (x, index) =>
+      index <= 9 && {
+        "Mã sản phẩm": x.id,
+        "Tên sản phẩm": x.name,
+        "Loại sản phẩm": x.category.name,
+        Giá: x.price,
+        "Số lượng đã bán": getProductQuantity(x),
+        "Số lượng còn": x.quantity,
+      }
+  );
+
   return (
     <div>
       <div className="font-bold">Trang thống kê</div>
@@ -121,7 +141,12 @@ function StatisticsPage() {
           </div>
         </div>
         <div className="p-3 border bottom-2 rounded-md col-start-1 col-end-5">
-          <div className="py-2 font-bold">Tình trạng bán sản phẩm</div>
+          <div className="py-2 font-bold mb-6 grid grid-cols-2">
+            <div>Top 10 sản phẩm bán chạy</div>
+            <div className="flex justify-end">
+              <ExportExcel apiData={dataCsv} fileName={"statitics"} />
+            </div>
+          </div>
           <div className="relative overflow-x-auto overflow-y-auto h-80 shadow-md sm:rounded-lg">
             <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
               <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -147,24 +172,29 @@ function StatisticsPage() {
                 </tr>
               </thead>
               <tbody>
-                {products
+                {result
                   .slice()
-                  .sort((a, b) => b.quantity - a.quantity)
-                  .map((x) => (
-                    <tr
-                      key={x.id}
-                      className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-                    >
-                      <td className="px-6 py-4">{x.id}</td>
-                      <td className="px-6 py-4">{x.name}</td>
-                      <td className="px-6 py-4">{x.category.name}</td>
-                      <td className="px-6 py-4">{x.price.toLocaleString()}đ</td>
-                      <td className="px-6 py-4 text-center">
-                        {getProductQuantity(x)}
-                      </td>
-                      <td className="px-6 py-4 text-center">{x.quantity}</td>
-                    </tr>
-                  ))}
+                  .sort((a, b) => b.sold - a.sold)
+                  .map(
+                    (x, index) =>
+                      index <= 9 && (
+                        <tr
+                          key={x.id}
+                          className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                        >
+                          <td className="px-6 py-4">{x.id}</td>
+                          <td className="px-6 py-4">{x.product}</td>
+                          <td className="px-6 py-4">{x.category}</td>
+                          <td className="px-6 py-4">
+                            {x.price.toLocaleString()}đ
+                          </td>
+                          <td className="px-6 py-4 text-center">{x.sold}</td>
+                          <td className="px-6 py-4 text-center">
+                            {x.quantity}
+                          </td>
+                        </tr>
+                      )
+                  )}
               </tbody>
             </table>
           </div>

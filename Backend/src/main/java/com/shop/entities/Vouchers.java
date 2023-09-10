@@ -11,8 +11,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,11 +43,9 @@ public class Vouchers implements Serializable {
 	private int status;
     
     @Column(name="date_start", nullable=false)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime dateStart;
     
     @Column(name="date_end", nullable=false)
-	@JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime dateEnd;
     
 	@ManyToOne(optional = false)

@@ -53,9 +53,6 @@ public class Product implements Serializable {
 
 	@Column(nullable = false, length = 255)
 	private String brand;
-
-	@Column(nullable = false, precision = 10)
-	private int sale;
 	
 	@Column(nullable = false, precision = 10)
 	private int quantity;

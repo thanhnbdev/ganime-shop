@@ -14,7 +14,16 @@ import { getAllVoucher } from "~/app/reducers/voucher";
 import FooterLayout from "~/layouts/FooterLayout";
 import HeaderLayout from "~/layouts/HeaderLayout";
 
-import { Breadcrumb, Button, Checkbox, Input, Modal, message } from "antd";
+import {
+  Breadcrumb,
+  Button,
+  Checkbox,
+  Input,
+  Modal,
+  Select,
+  message,
+} from "antd";
+import moment from "moment";
 
 function PurchasePage() {
   const navigate = useNavigate();
@@ -31,13 +40,6 @@ function PurchasePage() {
   const order = useSelector((state) => state.order.order);
   const totalPrice = useSelector((state) => state.order.totalPrice);
   const dispatch = useDispatch();
-
-  const now = new Date(
-    new Date().getTime() - new Date().getTimezoneOffset() * 60000
-  )
-    .toISOString()
-    .replace("T", " ")
-    .slice(0, 16);
 
   useEffect(() => {
     dispatch(getAllVoucher());
@@ -59,7 +61,12 @@ function PurchasePage() {
   }
 
   function handleVoucher() {
-    const check = vouchers.find((x) => x.code === voucher && x.dateEnd > now);
+    const check = vouchers.find(
+      (x) =>
+        x.code === voucher &&
+        moment().isBefore(x.dateEnd) &&
+        moment().isAfter(x.dateStart)
+    );
     if (check) {
       setSaleLocal(check.sale);
       dispatch(update({ ...order, code: check.sale }));
@@ -232,11 +239,7 @@ function PurchasePage() {
                             - size {x.size}
                           </td>
                           <td className="px-6 py-4">
-                            {(
-                              x.product.price -
-                              (x.product.price * x.product.sale) / 100
-                            ).toLocaleString()}
-                            ₫
+                            {x.product.price.toLocaleString()}₫
                           </td>
                           <td className="px-6 py-4 grid grid-cols-3 mt-4">
                             <Button
@@ -258,12 +261,7 @@ function PurchasePage() {
                             />
                           </td>
                           <td className="px-6 py-4 text-red-600 font-bold">
-                            {(
-                              (x.product.price -
-                                (x.product.price * x.product.sale) / 100) *
-                              x.quantity
-                            ).toLocaleString()}
-                            ₫
+                            {(x.product.price * x.quantity).toLocaleString()}₫
                           </td>
                           <td className="px-6 py-4">
                             <Button
@@ -299,10 +297,27 @@ function PurchasePage() {
                 >
                   <div>
                     <label>Mã giảm giá</label>
-                    <Input
-                      value={voucher}
+                    <Select
+                      showSearch
+                      filterOption={(input, option) =>
+                        (option?.label ?? "")
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
+                      placeholder="Chọn mã voucher"
                       size="large"
-                      onChange={(e) => setVoucher(e.target.value)}
+                      options={vouchers
+                        .filter(
+                          (x) =>
+                            moment().isBefore(x.dateEnd) &&
+                            moment().isAfter(x.dateStart)
+                        )
+                        .map((x) => ({
+                          value: x.code,
+                          label: `${x.code} - Giảm ${x.sale}%`,
+                        }))}
+                      className="w-full"
+                      onChange={(value) => setVoucher(value)}
                     />
                   </div>
                 </Modal>
@@ -342,7 +357,6 @@ function PurchasePage() {
                   </span>
                 </span>
                 <Button
-                  type="button"
                   type="primary"
                   className="w-56 ml-8"
                   onClick={() => navigate(`payment/${saleLocal}`)}

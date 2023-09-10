@@ -57,19 +57,33 @@ function HomeUserPage() {
   const favo = favourites.filter((x) => x.user.id === currentUser?.id);
   const size = products.filter(
     (x) =>
-      // x.category.name.includes(filter) &&
+      x.color.some((y) => y.name.includes(filterColor)) &&
+      x.size.some((y) => y.name.includes(filterSize)) &&
+      x.name.toUpperCase().includes(valueSearch.toUpperCase()) &&
       x.status === 1
   ).length;
   const itemsPerPage = 16;
   const endOffset = itemOffset + itemsPerPage;
   const currentItems = products
-    .filter((x) => x.status === 1)
+    .filter(
+      (x) =>
+        x.color.some((y) => y.name.includes(filterColor)) &&
+        x.size.some((y) => y.name.includes(filterSize)) &&
+        x.name.toUpperCase().includes(valueSearch.toUpperCase()) &&
+        x.status === 1
+    )
     .slice(itemOffset, endOffset);
   // Invoke when user click to request another page.
   const handlePageClick = (page) => {
     const newOffset =
       ((page - 1) * itemsPerPage) %
-      products.filter((x) => x.status === 1).length;
+      products.filter(
+        (x) =>
+          x.color.some((y) => y.name.includes(filterColor)) &&
+          x.size.some((y) => y.name.includes(filterSize)) &&
+          x.name.toUpperCase().includes(valueSearch.toUpperCase()) &&
+          x.status === 1
+      ).length;
     setItemOffset(newOffset);
   };
 
@@ -167,90 +181,69 @@ function HomeUserPage() {
                 className="w-1/2"
               />
             </div>
-            {currentItems
-              .filter(
-                (x) =>
-                  x.color.some((y) => y.name.includes(filterColor)) &&
-                  x.size.some((y) => y.name.includes(filterSize)) &&
-                  x.name.toUpperCase().includes(valueSearch.toUpperCase())
-              )
-              .map((x) => (
-                <Badge.Ribbon
-                  key={x.id}
-                  className={`${x.sale <= 0 && x.quantity > 0 ? "hidden" : ""}`}
-                  color={x.sale > 0 ? "blue" : x.quantity <= 0 ? "red" : ""}
-                  text={
-                    <div>
-                      {x.sale > 0 ? (
-                        <p>Khuyến mãi - {x.sale}%</p>
-                      ) : (
-                        <div>{x.quantity <= 0 ? <p>Hết hàng</p> : ""}</div>
-                      )}
-                    </div>
-                  }
-                >
-                  <div className="w-full h-96 rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700">
-                    <Link to={`/product-detail/${x.id}/${x.name}`}>
-                      <img
-                        className="rounded-t-lg w-full transition duration-1000 h-64 hover:scale-105"
-                        src={x.image}
-                        alt={x.name}
-                      />
-                    </Link>
-                    <div className="px-5 grid grid-rows-3 h-32 max-h-32">
-                      <div className="row-start-1 row-end-3">
-                        <Link
-                          to={`/product-detail/${x.id}/${x.name}`}
-                          className="no-underline"
-                        >
-                          <p className="font-bold text-gray-900 py-2">
-                            {x.name}
-                          </p>
-                        </Link>
-                        <div className="flex items-start gap-1">
-                          {x.color.map((y, index) => (
-                            <div
-                              key={index}
-                              style={{ backgroundColor: y.descriptions }}
-                              className="w-4 h-4 border-2 border-white rounded-full"
-                            />
-                          ))}
-                        </div>
+            {currentItems.map((x) => (
+              <Badge.Ribbon
+                key={x.id}
+                className={`${x.quantity > 0 ? "hidden" : ""}`}
+                color={x.sale > 0 ? "blue" : x.quantity <= 0 ? "red" : ""}
+                text={<div>{x.quantity <= 0 ? <p>Hết hàng</p> : ""}</div>}
+              >
+                <div className="w-full h-96 rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700">
+                  <Link to={`/product-detail/${x.id}/${x.name}`}>
+                    <img
+                      className="rounded-t-lg w-full transition duration-1000 h-64 hover:scale-105"
+                      src={x.image}
+                      alt={x.name}
+                    />
+                  </Link>
+                  <div className="px-5 grid grid-rows-3 h-32 max-h-32">
+                    <div className="row-start-1 row-end-3">
+                      <Link
+                        to={`/product-detail/${x.id}/${x.name}`}
+                        className="no-underline"
+                      >
+                        <p className="font-bold text-gray-900 py-2">{x.name}</p>
+                      </Link>
+                      <div className="flex items-start gap-1">
+                        {x.color.map((y, index) => (
+                          <div
+                            key={index}
+                            style={{ backgroundColor: y.descriptions }}
+                            className="w-4 h-4 border-2 border-white rounded-full"
+                          />
+                        ))}
                       </div>
-                      <div className="flex justify-between gap-1">
-                        <span className="text-2xl font-bold dark:text-white">
-                          {(
-                            x.price -
-                            (x.price * x.sale) / 100
-                          ).toLocaleString()}
-                          đ
-                        </span>
-                        <div
-                          className="cursor-pointer"
-                          onClick={() =>
-                            handleFavourite(
-                              x.id,
-                              favo.some((y) => y.product.id === x.id)
-                            )
-                          }
-                        >
-                          {favo.some((y) => y.product.id === x.id) ? (
-                            <FontAwesomeIcon
-                              icon={faHeartSolid}
-                              className="text-red-600 text-xl"
-                            />
-                          ) : (
-                            <FontAwesomeIcon
-                              icon={faHeart}
-                              className="text-red-600 text-xl"
-                            />
-                          )}
-                        </div>
+                    </div>
+                    <div className="flex justify-between gap-1">
+                      <span className="text-2xl font-bold dark:text-white">
+                        {x.price.toLocaleString()}đ
+                      </span>
+                      <div
+                        className="cursor-pointer"
+                        onClick={() =>
+                          handleFavourite(
+                            x.id,
+                            favo.some((y) => y.product.id === x.id)
+                          )
+                        }
+                      >
+                        {favo.some((y) => y.product.id === x.id) ? (
+                          <FontAwesomeIcon
+                            icon={faHeartSolid}
+                            className="text-red-600 text-xl"
+                          />
+                        ) : (
+                          <FontAwesomeIcon
+                            icon={faHeart}
+                            className="text-red-600 text-xl"
+                          />
+                        )}
                       </div>
                     </div>
                   </div>
-                </Badge.Ribbon>
-              ))}
+                </div>
+              </Badge.Ribbon>
+            ))}
             <div className="col-start-1 col-end-5 flex justify-center items-center mt-3">
               {/* Pagination */}
               <Pagination

@@ -3,12 +3,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { getAllRole } from "~/app/reducers/role";
 import { add, getAllUser, getUserById, update } from "~/app/reducers/user";
 
-import { CSVLink } from "react-csv";
-
-import { faFileExcel, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button, Input, Modal, Pagination, message } from "antd";
-import { Field, Form, Formik } from "formik";
+import { Button, Form, Input, Modal, Pagination, message } from "antd";
+import { ExportExcel } from "../../../components/Export/ExportExcel";
+import validators from "../../../services/validators";
+import { faPenToSquare } from "@fortawesome/free-regular-svg-icons";
 
 function CustomerManaPage() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -23,6 +23,7 @@ function CustomerManaPage() {
   const roles = useSelector((state) => state.role.roles);
   const user = useSelector((state) => state.user.user);
   const dispatch = useDispatch();
+  const [form] = Form.useForm();
 
   useEffect(() => {
     dispatch(getAllUser());
@@ -74,39 +75,43 @@ function CustomerManaPage() {
       })
     );
     messageApi.success("Thêm khách hàng thành công");
+    form.resetFields();
+    setFlag(!flag);
     setVisibleAdd(false);
   }
 
   function handleDelete() {
     dispatch(update({ ...user, status: 0 }));
     messageApi.success("Xóa khách hàng thành công");
+    setFlag(!flag);
     setVisibleDelete(false);
   }
 
   function handleRestore() {
     dispatch(update({ ...user, status: 1 }));
     messageApi.success("Khôi phục thành công");
+    setFlag(!flag);
     setVisibleRestore(false);
   }
 
   function handleUpdate(values) {
-    dispatch(update(values));
+    dispatch(update({ ...user, ...values }));
     messageApi.success("Cập nhật thành công");
+    form.resetFields();
+    setFlag(!flag);
     setVisibleUpdate(false);
   }
 
-  const dataCsv = [];
-  users
+  const dataCsv = users
     .filter((x) => x.role?.some((x) => x.name === "KHÁCH HÀNG"))
-    .map((x) =>
-      dataCsv.push({
-        MaNhanVien: x.id,
-        HoTen: x.fullname,
-        TenDangNhap: x.username,
-        Email: x.email,
-        TrangThai: x.status === 0 ? "Không hoạt động" : "Hoạt động",
-      })
-    );
+    .map((x) => ({
+      "Mã khách hàng": x.id,
+      "Họ tên": x.fullname,
+      "Tên đăng nhập": x.username,
+      Email: x.email,
+      "Số điện thoại": x.phone,
+      "Trạng thái": x.status === 0 ? "Không hoạt động" : "Hoạt động",
+    }));
 
   return (
     <div>
@@ -115,9 +120,7 @@ function CustomerManaPage() {
       <div className="grid grid-cols-2 gap-2 py-3">
         <div className="w-full">
           <Input.Search
-            onChange={(e) =>
-              setTimeout(() => setValueSearch(e.target.value), 1000)
-            }
+            onSearch={(value) => setTimeout(() => setValueSearch(value), 1000)}
             size="large"
             allowClear
             placeholder="Tìm kiếm..."
@@ -131,15 +134,7 @@ function CustomerManaPage() {
           >
             <span className="mx-2">Thêm</span>
           </Button>
-          <Button
-            type="primary"
-            style={{ backgroundColor: "#27ae60" }}
-            icon={<FontAwesomeIcon icon={faFileExcel} />}
-          >
-            <CSVLink data={dataCsv} className="mx-2">
-              Export
-            </CSVLink>
-          </Button>
+          <ExportExcel apiData={dataCsv} fileName={"users"} />
         </div>
       </div>
       <div className="mt-4">
@@ -148,7 +143,7 @@ function CustomerManaPage() {
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
               <tr>
                 <th scope="col" className="px-6 py-3">
-                  ID
+                  STT
                 </th>
                 <th scope="col" className="px-6 py-3">
                   Ảnh
@@ -163,6 +158,9 @@ function CustomerManaPage() {
                   Email
                 </th>
                 <th scope="col" className="px-6 py-3">
+                  Số điện thoại
+                </th>
+                <th scope="col" className="px-6 py-3">
                   Trạng thái
                 </th>
                 <th scope="col" colSpan={3} className="px-6 py-3 text-center">
@@ -173,12 +171,12 @@ function CustomerManaPage() {
             <tbody>
               {currentItems
                 .filter((x) => x.fullname.toLowerCase().includes(valueSearch))
-                .map((x) => (
+                .map((x, index) => (
                   <tr
                     key={x.id}
                     className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
-                    <td className="px-6 py-4">{x.id}</td>
+                    <td className="px-6 py-4">{index + 1}</td>
                     <td className="px-6 py-4">
                       <img
                         src={x.avatar}
@@ -189,23 +187,25 @@ function CustomerManaPage() {
                     <td className="px-6 py-4">{x.fullname}</td>
                     <td className="px-6 py-4">{x.username}</td>
                     <td className="px-6 py-4">{x.email}</td>
+                    <td className="px-6 py-4">{x.phone}</td>
                     <td className="px-6 py-4">
                       {x.status === 1 ? "Hoạt động" : "Không hoạt động"}
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <Button type="primary" onClick={() => showUpdate(x.id)}>
-                        Chỉnh sửa
-                      </Button>
+                    <td className="px-1 py-4 text-center">
+                      <Button
+                        type="primary"
+                        onClick={() => showUpdate(x.id)}
+                        icon={<FontAwesomeIcon icon={faPenToSquare} />}
+                      />
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-1 py-4 text-center">
                       {x.status === 1 ? (
                         <Button
                           type="primary"
                           danger
                           onClick={() => showDelete(x.id)}
-                        >
-                          Xóa
-                        </Button>
+                          icon={<FontAwesomeIcon icon={faTrash} />}
+                        />
                       ) : (
                         <Button
                           type="default"
@@ -248,6 +248,7 @@ function CustomerManaPage() {
           {/* Modal update */}
           <Modal
             open={visibleUpdate}
+            centered
             okButtonProps={{
               form: "update-form",
               key: "update-submit",
@@ -256,82 +257,173 @@ function CustomerManaPage() {
             title="Cập nhật thông tin khách hàng"
             onCancel={() => setVisibleUpdate(false)}
           >
-            <Formik
-              enableReinitialize
+            <Form
+              form={form}
+              name="update-form"
               initialValues={{
-                ...user,
-                fullname: user.fullname || "",
-                avatar: user.avatar || "",
-                username: user.username || "",
-                email: user.email || "",
-                status: user.status || "",
+                remember: true,
               }}
-              onSubmit={(values) => handleUpdate(values)}
+              fields={[
+                {
+                  name: ["username"],
+                  value: user.username,
+                },
+                {
+                  name: ["fullname"],
+                  value: user.fullname,
+                },
+                {
+                  name: ["email"],
+                  value: user.email,
+                },
+                {
+                  name: ["phone"],
+                  value: user.phone,
+                },
+                {
+                  name: ["avatar"],
+                  value: user.avatar,
+                },
+              ]}
+              onFinish={handleUpdate}
             >
-              {({
-                values,
-                touched,
-                /* and other goodies */
-              }) => (
-                <Form id="update-form">
-                  <div>
-                    <div>
-                      <label>Họ tên</label>
-                      <Field
-                        type="text"
-                        name="fullname"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.fullname}
-                      />
-                    </div>
-                    <div>
-                      <label>Ảnh đại diện</label>
-                      <Field
-                        type="text"
-                        name="avatar"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.avatar}
-                      />
-                    </div>
-                    <div>
-                      <label>Tên đăng nhập</label>
-                      <Field
-                        type="text"
-                        name="username"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.username}
-                      />
-                    </div>
-                    <div>
-                      <label>Email</label>
-                      <Field
-                        type="text"
-                        name="email"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.email}
-                      />
-                    </div>
-                    <div>
-                      <label>Trạng thái</label>
-                      <Field
-                        type="text"
-                        name="status"
-                        disabled
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={
-                          values.status === 1 ? "Hoạt động" : "Không hoạt động"
+              <Form.Item
+                label="Họ tên"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="fullname"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập họ tên !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
                         }
-                      />
-                    </div>
-                  </div>
-                </Form>
-              )}
-            </Formik>
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input size="large" placeholder="Họ tên" />
+              </Form.Item>
+              <Form.Item
+                label="Tên đăng nhập"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="username"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập username !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Username" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Ảnh đại diện"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="avatar"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập ảnh đại diện !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input size="large" placeholder="Ảnh đại diện" />
+              </Form.Item>
+              <Form.Item
+                label="Email"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="email"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập email !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (!validators.email.test(value)) {
+                          reject("Nhập sai định dạng email !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input size="large" placeholder="Email" />
+              </Form.Item>
+              <Form.Item
+                label="Số điện thoại"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="phone"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập số điện thoại !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (!validators.phone.test(value)) {
+                          reject("Không đúng định dạng số điện thoại !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Số điện thoại" size="large" />
+              </Form.Item>
+            </Form>
           </Modal>
           {/* Modal add */}
           <Modal
             open={visibleAdd}
             title="Thêm mới khách hàng"
+            centered
             okButtonProps={{
               form: "add-form",
               key: "submit",
@@ -339,74 +431,145 @@ function CustomerManaPage() {
             }}
             onCancel={() => setVisibleAdd(false)}
           >
-            <Formik
-              enableReinitialize
+            <Form
+              form={form}
+              name="add-form"
               initialValues={{
-                ...user,
-                fullname: user.fullname || "",
-                avatar: user.avatar || "",
-                username: user.username || "",
-                password: user.password || "",
-                email: user.email || "",
-                status: 1,
+                remember: true,
               }}
-              onSubmit={(values) => handleAdd(values)}
+              onFinish={handleAdd}
             >
-              {({
-                values,
-                /* and other goodies */
-              }) => (
-                <Form id="add-form">
-                  <div>
-                    <div>
-                      <label>Họ tên</label>
-                      <Field
-                        type="text"
-                        name="fullname"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.fullname}
-                      />
-                    </div>
-                    <div>
-                      <label>Ảnh đại diện</label>
-                      <Field
-                        type="text"
-                        name="avatar"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.avatar}
-                      />
-                    </div>
-                    <div>
-                      <label>Tên đăng nhập</label>
-                      <Field
-                        type="text"
-                        name="username"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.username}
-                      />
-                    </div>
-                    <div>
-                      <label>Mật khẩu</label>
-                      <Field
-                        type="password"
-                        name="password"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.password}
-                      />
-                    </div>
-                    <div>
-                      <label>Email</label>
-                      <Field
-                        type="text"
-                        name="email"
-                        className="bg-gray-50 border border-solid border-slate-200 rounded-lg focus:outline-blue-500 block w-full p-2.5"
-                        value={values.email}
-                      />
-                    </div>
-                  </div>
-                </Form>
-              )}
-            </Formik>
+              <Form.Item
+                label="Họ tên"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="fullname"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập họ tên !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input size="large" placeholder="Họ tên" />
+              </Form.Item>
+              <Form.Item
+                label="Tên đăng nhập"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="username"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập username !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Username" size="large" />
+              </Form.Item>
+              <Form.Item
+                label="Ảnh đại diện"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="avatar"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập ảnh đại diện !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (validators.space.test(value)) {
+                          reject("Không bao gồm khoảng trắng ở đầu !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input size="large" placeholder="Ảnh đại diện" />
+              </Form.Item>
+              <Form.Item
+                label="Email"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="email"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập email !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (!validators.email.test(value)) {
+                          reject("Nhập sai định dạng email !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input size="large" placeholder="Email" />
+              </Form.Item>
+              <Form.Item
+                label="Số điện thoại"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                name="phone"
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập số điện thoại !",
+                  },
+                  {
+                    validator(_, value) {
+                      return new Promise((resolve, reject) => {
+                        if (!validators.phone.test(value)) {
+                          reject("Không đúng định dạng số điện thoại !");
+                        } else {
+                          resolve();
+                        }
+                      });
+                    },
+                  },
+                ]}
+              >
+                <Input placeholder="Số điện thoại" size="large" />
+              </Form.Item>
+            </Form>
           </Modal>
         </div>
         <div className="flex justify-center items-center mt-3">
