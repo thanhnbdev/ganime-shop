@@ -60,16 +60,16 @@ function PurchasePage() {
     messageApi.success("Xóa sản phẩm thành công");
   }
 
+  const check = vouchers.find(
+    (x) =>
+      x.code === voucher &&
+      moment().isBefore(x.dateEnd) &&
+      moment().isAfter(x.dateStart)
+  );
+
   function handleVoucher() {
-    const check = vouchers.find(
-      (x) =>
-        x.code === voucher &&
-        moment().isBefore(x.dateEnd) &&
-        moment().isAfter(x.dateStart)
-    );
     if (check) {
       setSaleLocal(check.sale);
-      dispatch(update({ ...order, code: check.sale }));
       setFlag(!flag);
       messageApi.success("Sử dụng mã thành công");
     } else {

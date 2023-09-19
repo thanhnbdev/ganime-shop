@@ -245,7 +245,7 @@ function AtStorePage() {
     .create({
       headers: {
         "Content-Type": "application/json",
-        Token: "93f085907d94f5c1f1b089ad6b7d801bfda9c27c",
+        Token: "459a70408be32f213a2db11dcd9be6ba03819d4b",
       },
     })
     .post("https://services.giaohangtietkiem.vn/services/shipment/fee", {
@@ -295,8 +295,8 @@ function AtStorePage() {
             ...list.filter((z) => z.product?.id !== x),
             {
               product: products.find((y) => y.id === x),
-              color: list.find((z) => z.product?.id === x)?.color?.name,
-              size: list.find((z) => z.product?.id === x)?.size?.name,
+              color: list.find((z) => z.product?.id === x)?.color,
+              size: list.find((z) => z.product?.id === x)?.size,
               quantity: value,
             },
           ])
@@ -322,7 +322,7 @@ function AtStorePage() {
             {
               product: products.find((y) => y.id === x),
               quantity: list.find((z) => z.product?.id === x)?.quantity,
-              color: list.find((z) => z.product?.id === x)?.color.name,
+              color: list.find((z) => z.product?.id === x)?.color,
               size: value,
             },
           ])
@@ -348,7 +348,7 @@ function AtStorePage() {
             {
               product: products.find((y) => y.id === x),
               quantity: list.find((z) => z.product?.id === x)?.quantity,
-              size: list.find((z) => z.product?.id === x)?.size.name,
+              size: list.find((z) => z.product?.id === x)?.size,
               color: value,
             },
           ])
@@ -711,7 +711,15 @@ function AtStorePage() {
                 validator(_, value) {
                   return new Promise((resolve, reject) => {
                     if (
-                      value - (fee >= 0 ? totalPrice + fee : totalPrice) <
+                      value -
+                        (money -
+                          (fee >= 0 ? totalPrice + fee : totalPrice) *
+                            (voucher?.length > 0
+                              ? (100 -
+                                  vouchers.find((x) => x.code === voucher)
+                                    ?.sale) /
+                                100
+                              : 1)) <
                       0
                     ) {
                       reject("Số tiền không đủ !");
@@ -792,7 +800,12 @@ function AtStorePage() {
               Không hỗ trợ dịch vụ vận chuyển tại khu vực này
             </div>
           )}
-          {money - (fee >= 0 ? totalPrice + fee : totalPrice) >= 0 &&
+          {money -
+            (fee >= 0 ? totalPrice + fee : totalPrice) *
+              (voucher?.length > 0
+                ? (100 - vouchers.find((x) => x.code === voucher)?.sale) / 100
+                : 1) >=
+            0 &&
             idProduct.length > 0 && (
               <>
                 <Form.Item className="col-start-1 mt-6">

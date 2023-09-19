@@ -54,8 +54,7 @@ function ProductDetail() {
     dispatch(getProductById(idProduct));
     authoService.currentUser().then((res) => setCurrentUser(res));
     // eslint-disable-next-line
-  }, [quantity]);
-  console.log(currentUser);
+  }, []);
 
   function handleAddToCard() {
     if (currentUser?.id > 0 && currentUser?.role?.some((x) => x.id === 3)) {
@@ -265,9 +264,9 @@ function ProductDetail() {
               <div>
                 <span className="font-bold">Số lượng</span> :{" "}
                 <InputNumber
-                  value={quantity}
                   size="large"
                   className="w-full"
+                  defaultValue={1}
                   min={1}
                   max={product.quantity}
                   onChange={(value) => setQuantity(value)}

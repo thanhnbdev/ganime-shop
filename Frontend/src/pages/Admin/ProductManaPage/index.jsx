@@ -6,8 +6,10 @@ import http from "~/services/apiService";
 
 import { faEye, faPenToSquare } from "@fortawesome/free-regular-svg-icons";
 import {
+  faPalette,
   faPlus,
   faRotateLeft,
+  faRulerCombined,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -23,6 +25,16 @@ import {
 } from "antd";
 import { getAllColor } from "../../../app/reducers/color";
 import { getAllSize } from "../../../app/reducers/size";
+import {
+  add as addPs,
+  getAllProductSize,
+  deleteById,
+} from "~/app/reducers/productSize";
+import {
+  add as addPc,
+  getAllProductColor,
+  deleteById as deletePcById,
+} from "~/app/reducers/productColor";
 import { ExportExcel } from "../../../components/Export/ExportExcel";
 import validators from "../../../services/validators";
 
@@ -32,10 +44,13 @@ function ProductManaPage() {
   const [visibleDetail, setVisibleDetail] = useState(false);
   const [visibleDelete, setVisibleDelete] = useState(false);
   const [visibleRestore, setVisibleRestore] = useState(false);
+  const [visibleSize, setVisibleSize] = useState(false);
+  const [visibleColor, setVisibleColor] = useState(false);
   const [visibleUpdate, setVisibleUpdate] = useState(false);
   const [flag, setFlag] = useState(false);
   const [image, setImage] = useState("");
   const [url, setUrl] = useState("");
+  const [page, setPage] = useState(0);
   const [valueSearch, setValueSearch] = useState("");
   const [sizeSearch, setSizeSearch] = useState("");
   const [colorSearch, setColorSearch] = useState("");
@@ -46,6 +61,10 @@ function ProductManaPage() {
   const colors = useSelector((state) => state.color.colors);
   const product = useSelector((state) => state.product.product);
   const categories = useSelector((state) => state.category.categories);
+  const productSizes = useSelector((state) => state.productSize.productSizes);
+  const productColors = useSelector(
+    (state) => state.productColor.productColors
+  );
   const dispatch = useDispatch();
   const [form] = Form.useForm();
 
@@ -54,6 +73,8 @@ function ProductManaPage() {
     dispatch(getAllCategory());
     dispatch(getAllSize());
     dispatch(getAllColor());
+    dispatch(getAllProductSize());
+    dispatch(getAllProductColor());
     // eslint-disable-next-line
   }, [flag]);
 
@@ -66,8 +87,8 @@ function ProductManaPage() {
         x?.category?.name
           ?.toLowerCase()
           .includes(categorySearch?.toLowerCase()) &&
-        x.color.some((y) => y.name.includes(colorSearch)) &&
-        x.size.some((y) => y.name.includes(sizeSearch))
+        x.color?.some((y) => y.name.includes(colorSearch)) &&
+        x.size?.some((y) => y.name.includes(sizeSearch))
     )
     .slice(itemOffset, endOffset);
   const size = products.filter(
@@ -76,12 +97,13 @@ function ProductManaPage() {
       x?.category?.name
         ?.toLowerCase()
         .includes(categorySearch?.toLowerCase()) &&
-      x.color.some((y) => y.name.includes(colorSearch)) &&
-      x.size.some((y) => y.name.includes(sizeSearch))
+      x.color?.some((y) => y.name.includes(colorSearch)) &&
+      x.size?.some((y) => y.name.includes(sizeSearch))
   ).length;
 
   // Invoke when user click to request another page.
   const handlePageClick = (page) => {
+    setPage(page - 1);
     const newOffset = ((page - 1) * itemsPerPage) % size;
     setItemOffset(newOffset);
   };
@@ -92,6 +114,16 @@ function ProductManaPage() {
 
   function showDetail(id) {
     setVisibleDetail(true);
+    dispatch(getProductById(id));
+  }
+
+  function showSize(id) {
+    setVisibleSize(true);
+    dispatch(getProductById(id));
+  }
+
+  function showColor(id) {
+    setVisibleColor(true);
     dispatch(getProductById(id));
   }
 
@@ -134,6 +166,28 @@ function ProductManaPage() {
     messageApi.success("Thêm sản phẩm thành công");
   }
 
+  function handleAddSize(values) {
+    dispatch(
+      addPs({
+        product: product,
+        size: sizes.find((x) => x.id === values.size),
+      })
+    );
+    setVisibleSize(false);
+    messageApi.success("Thêm kích cỡ thành công");
+  }
+
+  function handleAddColor(values) {
+    dispatch(
+      addPc({
+        product: product,
+        color: colors.find((x) => x.id === values.color),
+      })
+    );
+    setVisibleColor(false);
+    messageApi.success("Thêm màu sắc thành công");
+  }
+
   function handleDelete() {
     dispatch(update({ ...product, status: 0 }));
     setVisibleDelete(false);
@@ -149,12 +203,12 @@ function ProductManaPage() {
   function handleUpdate(values) {
     dispatch(
       update({
+        ...product,
         ...values,
         category: categories.find((x) => x.id === Number(values.category)),
         size: product.size,
         id: product.id,
-        image: url,
-        status: 1,
+        image: url.length > 0 ? url : product.image,
       })
     );
     setVisibleUpdate(false);
@@ -286,7 +340,7 @@ function ProductManaPage() {
                 <th scope="col" className="px-6 py-3">
                   Trạng thái
                 </th>
-                <th scope="col" colSpan={3} className="text-center">
+                <th scope="col" colSpan={5} className="text-center">
                   Thao tác
                 </th>
               </tr>
@@ -309,7 +363,7 @@ function ProductManaPage() {
                     key={x.id}
                     className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
-                    <td className="text-center">{index + 1}</td>
+                    <td className="text-center">{index + 1 + 5 * page}</td>
                     <td className="px-6 py-4">
                       <img
                         src={x.image}
@@ -326,14 +380,30 @@ function ProductManaPage() {
                     <td className="py-4">
                       {x.status === 1 ? "Còn bán" : "Không còn bán"}
                     </td>
-                    <td className="px-2 py-4 text-center">
+                    <td className="py-4 px-1 text-center">
+                      <Button
+                        type="primary"
+                        onClick={() => showColor(x.id)}
+                        style={{ backgroundColor: "orange" }}
+                        icon={<FontAwesomeIcon icon={faPalette} />}
+                      />
+                    </td>
+                    <td className="py-4 px-1 text-center">
+                      <Button
+                        type="primary"
+                        onClick={() => showSize(x.id)}
+                        style={{ backgroundColor: "pink" }}
+                        icon={<FontAwesomeIcon icon={faRulerCombined} />}
+                      />
+                    </td>
+                    <td className="py-4 px-1 text-center">
                       <Button
                         type="primary"
                         onClick={() => showDetail(x.id)}
                         icon={<FontAwesomeIcon icon={faEye} />}
                       />
                     </td>
-                    <td className="px-2 py-4 text-center">
+                    <td className="py-4 px-1 text-center">
                       <Button
                         type="primary"
                         style={{ backgroundColor: "#1abc9c" }}
@@ -341,7 +411,7 @@ function ProductManaPage() {
                         icon={<FontAwesomeIcon icon={faPenToSquare} />}
                       />
                     </td>
-                    <td className="px-2 py-4 text-center">
+                    <td className="py-4 px-1 text-center">
                       {x.status === 1 ? (
                         <Button
                           type="primary"
@@ -442,6 +512,86 @@ function ProductManaPage() {
                 Xác nhận khôi phục sản phẩm này ?
               </h3>
             </div>
+          </Modal>
+          {/* Modal add size */}
+          <Modal
+            open={visibleSize}
+            title="Thêm kích cỡ sản phẩm"
+            okButtonProps={{
+              form: "add-size-form",
+              key: "add-size-submit",
+              htmlType: "submit",
+            }}
+            onCancel={() => setVisibleSize(false)}
+          >
+            <Form
+              fields={[
+                {
+                  name: ["size"],
+                  value: sizes.filter(
+                    (obj) => !product.size?.some(({ id }) => obj.id === id)
+                  )[0]?.id,
+                },
+              ]}
+              id="add-size-form"
+              form={form}
+              onFinish={handleAddSize}
+            >
+              <Form.Item name="size">
+                <Select
+                  size="large"
+                  className="w-full"
+                  options={sizes
+                    .filter(
+                      (obj) => !product.size?.some(({ id }) => obj.id === id)
+                    )
+                    .map((x) => ({
+                      value: x.id,
+                      label: x.name,
+                    }))}
+                />
+              </Form.Item>
+            </Form>
+          </Modal>
+          {/* Modal add color */}
+          <Modal
+            open={visibleColor}
+            title="Thêm màu sắc sản phẩm"
+            okButtonProps={{
+              form: "add-color-form",
+              key: "add-color-submit",
+              htmlType: "submit",
+            }}
+            onCancel={() => setVisibleColor(false)}
+          >
+            <Form
+              fields={[
+                {
+                  name: ["color"],
+                  value: colors.filter(
+                    (obj) => !product.color?.some(({ id }) => obj.id === id)
+                  )[0]?.id,
+                },
+              ]}
+              id="add-color-form"
+              form={form}
+              onFinish={handleAddColor}
+            >
+              <Form.Item name="color">
+                <Select
+                  size="large"
+                  className="w-full"
+                  options={colors
+                    .filter(
+                      (obj) => !product.color?.some(({ id }) => obj.id === id)
+                    )
+                    .map((x) => ({
+                      value: x.id,
+                      label: x.name,
+                    }))}
+                />
+              </Form.Item>
+            </Form>
           </Modal>
           {/* Modal update */}
           <Modal
@@ -682,13 +832,33 @@ function ProductManaPage() {
               </Form.Item>
               <div>
                 <label>Kích cỡ</label>
-                <div>
+                <div className="mt-4">
                   {product.size?.map((x) => (
                     <span
                       key={x.id}
-                      className="inline-flex items-center px-2 py-1 mr-2 text-sm font-medium text-blue-800 bg-blue-100 rounded"
+                      className="inline-flex relative items-center px-4 py-2 mr-2 bg-blue-100 rounded"
                     >
-                      {x.name}
+                      <span className="font-bold text-lg text-blue-800">
+                        {x.name}
+                      </span>
+                      <span
+                        className="cursor-pointer absolute -top-2 right-0 text-lg"
+                        onClick={() => {
+                          dispatch(
+                            deleteById(
+                              productSizes.find(
+                                (y) =>
+                                  y.product.id === product.id &&
+                                  y.size.id === x.id
+                              ).id
+                            )
+                          );
+                          setVisibleUpdate(false);
+                          messageApi.success("Xóa kích cỡ thành công");
+                        }}
+                      >
+                        x
+                      </span>
                     </span>
                   ))}
                 </div>
@@ -700,9 +870,27 @@ function ProductManaPage() {
                     <span
                       key={x.id}
                       style={{ backgroundColor: x.descriptions }}
-                      className="inline-flex items-center px-2 py-1 mr-2 text-sm font-medium text-white rounded"
+                      className="inline-flex relative items-center p-2 mr-2 text-sm font-medium text-white rounded"
                     >
-                      {x.name}
+                      <span>{x.name}</span>
+                      <span
+                        className="cursor-pointer absolute -top-2 right-0 text-lg"
+                        onClick={() => {
+                          dispatch(
+                            deletePcById(
+                              productColors.find(
+                                (y) =>
+                                  y.product.id === product.id &&
+                                  y.color.id === x.id
+                              ).id
+                            )
+                          );
+                          setVisibleUpdate(false);
+                          messageApi.success("Xóa màu sắc thành công");
+                        }}
+                      >
+                        x
+                      </span>
                     </span>
                   ))}
                 </div>

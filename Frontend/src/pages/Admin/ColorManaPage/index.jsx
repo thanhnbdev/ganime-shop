@@ -19,6 +19,7 @@ function ColorManagePage() {
   const [visibleRestore, setVisibleRestore] = useState(false);
   const [visibleUpdate, setVisibleUpdate] = useState(false);
   const [valueSearch, setValueSearch] = useState("");
+  const [page, setPage] = useState(0);
   const [itemOffset, setItemOffset] = useState(0);
   const colors = useSelector((state) => state.color.colors);
   const color = useSelector((state) => state.color.color);
@@ -41,6 +42,7 @@ function ColorManagePage() {
 
   // Invoke when user click to request another page.
   const handlePageClick = (page) => {
+    setPage(page - 1);
     const newOffset = ((page - 1) * itemsPerPage) % colors.length;
     setItemOffset(newOffset);
   };
@@ -152,7 +154,7 @@ function ColorManagePage() {
                     key={x.id}
                     className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
-                    <td className="px-6 py-4">{index + 1}</td>
+                    <td className="px-6 py-4">{index + 1 + 5 * page}</td>
                     <td className="px-6 py-4">{x.name}</td>
                     <td className="px-6 py-4">{x.descriptions}</td>
                     <td className="px-6 py-4">
