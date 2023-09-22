@@ -60,16 +60,16 @@ function PurchasePage() {
     messageApi.success("Xóa sản phẩm thành công");
   }
 
+  const check = vouchers.find(
+    (x) =>
+      x.code === voucher &&
+      moment().isBefore(x.dateEnd) &&
+      moment().isAfter(x.dateStart)
+  );
+
   function handleVoucher() {
-    const check = vouchers.find(
-      (x) =>
-        x.code === voucher &&
-        moment().isBefore(x.dateEnd) &&
-        moment().isAfter(x.dateStart)
-    );
     if (check) {
       setSaleLocal(check.sale);
-      dispatch(update({ ...order, code: check.sale }));
       setFlag(!flag);
       messageApi.success("Sử dụng mã thành công");
     } else {
@@ -359,7 +359,9 @@ function PurchasePage() {
                 <Button
                   type="primary"
                   className="w-56 ml-8"
-                  onClick={() => navigate(`payment/${saleLocal}`)}
+                  onClick={() =>
+                    navigate(`payment/${voucher.length > 0 ? voucher : "0"}`)
+                  }
                 >
                   Đặt hàng
                 </Button>

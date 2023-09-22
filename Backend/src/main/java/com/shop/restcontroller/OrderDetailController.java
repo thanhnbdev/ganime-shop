@@ -65,6 +65,7 @@ public class OrderDetailController {
 		order.setColor(ordetail.getColor());
 		order.setSelected(false);
 		order.setStatus(1);
+		order.setCode(ordetail.getOrders().getCode());
 		order.setProduct(ordetail.getOrders().getProduct());
 		order.setUser(ordetail.getOrders().getUser());
 		orderDetail.setQuantity(order.getQuantity());
@@ -108,7 +109,7 @@ public class OrderDetailController {
 			order.setQuantity(as.getQuantity());
 			order.setSize(as.getSize());
 			order.setColor(as.getColor());
-			order.setCode(ordetail.getSale());
+			order.setCode(ordetail.getSale()+"");
 			order.setSelected(false);
 			order.setStatus(ordetail.getStatus());
 			order.setProduct(as.getProduct());

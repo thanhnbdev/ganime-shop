@@ -18,6 +18,7 @@ function CustomerManaPage() {
   const [visibleUpdate, setVisibleUpdate] = useState(false);
   const [flag, setFlag] = useState(false);
   const [valueSearch, setValueSearch] = useState("");
+  const [page, setPage] = useState(0);
   const [itemOffset, setItemOffset] = useState(0);
   const users = useSelector((state) => state.user.users);
   const roles = useSelector((state) => state.role.roles);
@@ -42,6 +43,7 @@ function CustomerManaPage() {
 
   // Invoke when user click to request another page.
   const handlePageClick = (page) => {
+    setPage(page - 1);
     const newOffset =
       ((page - 1) * itemsPerPage) %
       users.filter((x) => x.role?.some((x) => x.name === "KHÁCH HÀNG")).length;
@@ -176,7 +178,7 @@ function CustomerManaPage() {
                     key={x.id}
                     className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
-                    <td className="px-6 py-4">{index + 1}</td>
+                    <td className="px-6 py-4">{index + 1 + 5 * page}</td>
                     <td className="px-6 py-4">
                       <img
                         src={x.avatar}

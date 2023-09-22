@@ -25,6 +25,7 @@ import {
 } from "antd";
 import { update as updateOrder } from "~/app/reducers/order";
 import { update as updateOrderDetail } from "~/app/reducers/orderDetail";
+import { getAllVoucher } from "~/app/reducers/voucher";
 import authoService from "~/services/authoService";
 import validators from "../../../services/validators";
 import { faBan, faTimeline } from "@fortawesome/free-solid-svg-icons";
@@ -45,6 +46,7 @@ function ProfileUserPage() {
   const [currentUser, setCurrentUser] = useState({});
   const [od, setOd] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const vouchers = useSelector((state) => state.voucher.vouchers);
   const ordersDetailHistory = useSelector(
     (state) => state.orderDetail.ordersDetailHistory
   );
@@ -60,6 +62,7 @@ function ProfileUserPage() {
   useEffect(() => {
     dispatch(getAllUser());
     dispatch(getAllOrderDetail());
+    dispatch(getAllVoucher());
     authoService.currentUser().then((res) => setCurrentUser(res));
     // eslint-disable-next-line
   }, [flag]);
@@ -105,6 +108,7 @@ function ProfileUserPage() {
       ((page - 1) * itemsPerPage3) % ordersDetailCancelHistory.length;
     setItemOffset3(newOffset3);
   };
+  console.log(currentItems);
 
   function handleUpdate(values) {
     dispatch(
@@ -542,7 +546,12 @@ function ProfileUserPage() {
                     <td className="px-6 py-4 text-red-600 font-bold">
                       {(
                         (x.orders.product.price -
-                          (x.orders.product.price * x.orders.code) / 100) *
+                          (x.orders.product.price *
+                            (x.orders.code !== "0"
+                              ? vouchers.find((y) => y.code === x.orders.code)
+                                  ?.sale
+                              : 0)) /
+                            100) *
                         x.orders.quantity
                       ).toLocaleString()}
                       ₫

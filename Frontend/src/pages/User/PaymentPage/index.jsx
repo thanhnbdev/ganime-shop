@@ -12,6 +12,7 @@ import {
   getAllOrderDetail,
   update as updateDetail,
 } from "~/app/reducers/orderDetail";
+import { update as updateVcher, getAllVoucher } from "~/app/reducers/voucher";
 import validators from "../../../services/validators";
 import axios from "axios";
 
@@ -19,12 +20,14 @@ function PaymentPage() {
   const [messageApi, contextHolder] = message.useMessage();
   const [currentUser, setCurrentUser] = useState({});
   const [visibleNotice, setVisibleNotice] = useState(false);
+  const [isConform, setIsConform] = useState(false);
   const [district, setDistrict] = useState("");
   const [districts, setDistricts] = useState([]);
   const [provinces, setProvinces] = useState([]);
   const [fee, setFee] = useState(-1);
   const [delivery, setDelivery] = useState(true);
   const ordersDetail = useSelector((state) => state.orderDetail.ordersDetail);
+  const vouchers = useSelector((state) => state.voucher.vouchers);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { sale } = useParams();
@@ -45,6 +48,7 @@ function PaymentPage() {
         console.log(err);
       });
     dispatch(getAllOrderDetail());
+    dispatch(getAllVoucher());
     authoService.currentUser().then((res) => setCurrentUser(res));
     // eslint-disable-next-line
   }, []);
@@ -95,12 +99,24 @@ function PaymentPage() {
               phone: values.phone,
               selected: false,
               dateEnd: now,
-              code: sale,
+              code:
+                vouchers.find((x) => x.code === sale)?.code.length > 0
+                  ? vouchers.find((x) => x.code === sale)?.code.length
+                  : sale,
               status: 3,
             },
           })
         )
       );
+    if (sale !== "0") {
+      // update voucher
+      dispatch(
+        updateVcher({
+          ...vouchers.find((x) => x.code === sale),
+          quantity: vouchers.find((x) => x.code === sale)?.quantity - 1,
+        })
+      );
+    }
     messageApi.success("Xác nhận đơn hàng thành công");
     setTimeout(() => {
       setVisibleNotice(true);
@@ -149,8 +165,7 @@ function PaymentPage() {
               </p>
             </div>
             <Form
-              name="normal_payment"
-              className="payment-form"
+              id="payment-form"
               initialValues={{
                 remember: true,
               }}
@@ -289,7 +304,11 @@ function PaymentPage() {
                 </div>
               )}
               <Form.Item>
-                <Button type="primary" htmlType="submit" className="w-full">
+                <Button
+                  type="primary"
+                  onClick={() => setIsConform(true)}
+                  className="w-full"
+                >
                   Xác nhận đơn hàng
                 </Button>
               </Form.Item>
@@ -301,6 +320,26 @@ function PaymentPage() {
         </div>
       </div>
       {/* Modal confirm */}
+      <Modal
+        title="Xác nhận thông tin thanh toán đơn hàng"
+        open={isConform}
+        footer={null}
+        width={600}
+        onCancel={() => setIsConform(false)}
+      >
+        <div className="text-lg">Xác nhận thông tin thanh toán đơn hàng</div>
+        <Button
+          type="primary"
+          className="w-full mt-4"
+          htmlType="submit"
+          danger
+          form="payment-form"
+          onClick={() => setIsConform(false)}
+        >
+          XÁC NHẬN
+        </Button>
+      </Modal>
+      {/* Modal notice */}
       <Modal
         open={visibleNotice}
         title="Thông báo xác nhận đơn hàng"

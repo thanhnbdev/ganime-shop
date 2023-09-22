@@ -113,7 +113,7 @@ function VoucherManaPage() {
             },
           ]}
         >
-          <InputNumber size="large" className="w-full" />
+          <InputNumber size="large" className="w-full" min={1} max={50} />
         </Form.Item>
         <Form.Item
           label="Số lượng"

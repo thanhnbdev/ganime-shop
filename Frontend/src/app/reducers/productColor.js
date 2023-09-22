@@ -26,6 +26,10 @@ export const add = createAsyncThunk("product-color/add", (data) => {
   return http.httpPost("product-color", data);
 });
 
+export const deleteById = createAsyncThunk("product-color/delete", (id) => {
+  return http.httpDelete("product-color", id);
+});
+
 // Slice
 const slice = createSlice({
   name: "productColor",
@@ -92,6 +96,23 @@ const slice = createSlice({
       state.productColors.push(action.payload);
     });
     builder.addCase(add.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message;
+    });
+
+    //deleteById
+    builder.addCase(deleteById.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(deleteById.fulfilled, (state, action) => {
+      state.loading = false;
+      if (action.payload.id) {
+        state.productColors = state.productColors.filter(
+          (item) => item.id !== action.payload.id
+        );
+      }
+    });
+    builder.addCase(deleteById.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message;
     });
