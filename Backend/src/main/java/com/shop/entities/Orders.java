@@ -58,8 +58,8 @@ public class Orders implements Serializable {
 	@Column(nullable = false, precision = 10)
 	private int quantity;
 	
-    @Column(nullable=false, precision=10)
-    private int code;
+	@Column(nullable = false, length = 255)
+	private String code;
     
     @Column(nullable=false, length=3)
     private boolean selected;
