@@ -359,7 +359,9 @@ function PurchasePage() {
                 <Button
                   type="primary"
                   className="w-56 ml-8"
-                  onClick={() => navigate(`payment/${saleLocal}`)}
+                  onClick={() =>
+                    navigate(`payment/${voucher.length > 0 ? voucher : "0"}`)
+                  }
                 >
                   Đặt hàng
                 </Button>

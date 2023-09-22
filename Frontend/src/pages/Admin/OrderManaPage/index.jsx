@@ -145,8 +145,8 @@ function OrderManaPage() {
         );
       }
     });
-    setFlag(!flag);
     messageApi.success("Xác nhận đơn hàng giao thành công");
+    setFlag(!flag);
     setVisibleVerify(false);
   }
 

@@ -156,7 +156,7 @@ function ProductManaPage() {
       },
       sizeColor: {
         size: sizes.filter((x) => values.size.some((y) => y === x.id)),
-        color: colors.filter((x) => values.size.some((y) => y === x.id)),
+        color: colors.filter((x) => values.color.some((y) => y === x.id)),
       },
     });
     setVisibleAdd(false);

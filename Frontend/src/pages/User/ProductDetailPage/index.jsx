@@ -94,7 +94,7 @@ function ProductDetail() {
                   dateEnd: now,
                   quantity: Number(quantity),
                   date: now,
-                  code: 0,
+                  code: "0",
                   status: 1,
                   size: size,
                   color: color,

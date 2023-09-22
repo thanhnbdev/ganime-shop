@@ -16,7 +16,7 @@ import { getAllProductSize } from "~/app/reducers/productSize";
 import { getAllProductColor } from "~/app/reducers/productColor";
 import { getAllOrderDetail, deleteById } from "~/app/reducers/orderDetail";
 import { getAllUser } from "~/app/reducers/user";
-import { getAllVoucher } from "~/app/reducers/voucher";
+import { getAllVoucher, update as updateVcher } from "~/app/reducers/voucher";
 import http from "~/services/apiService";
 import { getAllColor } from "~/app/reducers/color";
 import { getAllSize } from "~/app/reducers/size";
@@ -46,6 +46,7 @@ function AtStorePage() {
   const [listResult, setListResult] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isShowOrder, setIsShowOrder] = useState(false);
+  const [isShowOrderPending, setIsShowOrderPending] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [check, setCheck] = useState(false);
   const [ship, setShip] = useState(false);
@@ -378,8 +379,6 @@ function AtStorePage() {
   }));
 
   function onFinish(value) {
-    console.log(value);
-    console.log(list);
     http
       .httpPost("order-detail/at-store", {
         check: check,
@@ -408,6 +407,13 @@ function AtStorePage() {
               })
             );
           });
+          // update voucher
+          dispatch(
+            updateVcher({
+              ...vouchers.find((x) => x.code === voucher),
+              quantity: vouchers.find((x) => x.code === voucher)?.quantity - 1,
+            })
+          );
           setList([]);
           setFee(0);
           form.resetFields();
@@ -825,9 +831,7 @@ function AtStorePage() {
                     type="primary"
                     className="w-full"
                     style={{ backgroundColor: "#f0932b" }}
-                    form="buy-form"
-                    htmlType="submit"
-                    onClick={() => setIsPending(true)}
+                    onClick={() => setIsShowOrderPending(true)}
                   >
                     TREO HÓA ĐƠN
                   </Button>
@@ -835,6 +839,38 @@ function AtStorePage() {
               </>
             )}
         </Form>
+        {/* Modal order pending */}
+        <Modal
+          open={isShowOrderPending}
+          title="Xác nhận treo hóa đơn"
+          okButtonProps={{
+            form: "buy-form",
+            key: "submit",
+            htmlType: "submit",
+          }}
+          footer={null}
+          onCancel={() => setIsShowOrderPending(false)}
+        >
+          <div className="text-center">
+            <h3 className="mb-5 text-lg font-normal text-gray-500">
+              Hóa đơn sẽ được tạm thời lưu lại và sử dụng sau
+            </h3>
+            <Button
+              type="primary"
+              className="w-full"
+              style={{ backgroundColor: "#f0932b" }}
+              form="buy-form"
+              htmlType="submit"
+              onClick={() => {
+                setIsPending(true);
+                setIsShowOrderPending(false);
+              }}
+            >
+              TREO HÓA ĐƠN
+            </Button>
+          </div>
+        </Modal>
+
         {/* Modal order */}
         <Modal
           title="Danh sách hóa đơn đang treo"
@@ -868,7 +904,13 @@ function AtStorePage() {
           <div className="text-lg">
             Xác nhận thanh toán đơn hàng này tại quầy với giá{" "}
             <span className="text-red-600 font-bold">
-              {(fee >= 0 ? totalPrice + fee : totalPrice).toLocaleString()}đ
+              {(
+                (fee >= 0 ? totalPrice + fee : totalPrice) *
+                (voucher?.length > 0
+                  ? (100 - vouchers.find((x) => x.code === voucher)?.sale) / 100
+                  : 1)
+              ).toLocaleString()}
+              đ
             </span>
           </div>
           <Button

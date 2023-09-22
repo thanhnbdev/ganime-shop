@@ -146,7 +146,7 @@ const slice = createSlice({
         (x) => x.status === 5 && x.orders.user.id === Number(id)
       );
       state.ordersDetailHistoryAdmin = action.payload.filter(
-        (x) => x.status !== 1 && x.orders.status !== 1
+        (x) => x.status !== 1 && x.status !== 4
       );
       state.ordersDetailHistoryAdminBill = action.payload.filter(
         (x) => x.status === 4 && x.orders.status === 4
